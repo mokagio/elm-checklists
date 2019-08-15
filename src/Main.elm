@@ -1,6 +1,6 @@
 import Browser
-import Html exposing (Html, div, input, text)
-import Html.Attributes exposing (type_, checked)
+import Html exposing (Html, div, input, label, text)
+import Html.Attributes exposing (checked, disabled, for, id, type_)
 import Html.Events exposing (onClick)
 
 main =
@@ -28,8 +28,15 @@ view model =
 
 toListItem viewModel =
   div []
-    [ input [ type_ "checkbox", checked viewModel.completed  ] []
-    , text viewModel.text
+    -- TODO: using viewModel.text for the id might result in inconsistencies if
+    -- there are multiple steps with the same name
+    [ input
+      [ type_ "checkbox"
+      , checked viewModel.completed
+      , disabled <| not viewModel.active
+      , id viewModel.text
+      ] []
+    , label [for viewModel.text] [text viewModel.text]
     ]
 
 process state =
