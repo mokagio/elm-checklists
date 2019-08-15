@@ -12,7 +12,7 @@ initialState =
     , Step "second"
     , Step "last"
     ]
-  , current = 1
+  , current = 0
   }
 
 type alias Step =
