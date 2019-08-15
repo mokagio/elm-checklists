@@ -29,7 +29,13 @@ update msg model =
 
 view model =
   -- TODO: is there something like <- that I can use? instead of wrapping in ()
-  div [] (List.map toListItem (process model))
+  div []
+    [ div [] (List.map toListItem (process model))
+    , div [] (if isCompleted model then [text "all done ✅"] else [])
+    ]
+
+isCompleted model =
+  model.current >= List.length model.steps
 
 toListItem viewModel =
   div []
