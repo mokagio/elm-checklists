@@ -19,8 +19,13 @@ type alias Step =
   { name : String
   }
 
+type Msg = MoveToNext
+
 update msg model =
-  model
+  if model.current < (List.length model.steps) then
+    { steps = model.steps, current = (model.current + 1) }
+  else
+    model
 
 view model =
   -- TODO: is there something like <- that I can use? instead of wrapping in ()
@@ -36,7 +41,9 @@ toListItem viewModel =
       , disabled <| not viewModel.active
       , id viewModel.text
       ] []
-    , label [for viewModel.text] [text viewModel.text]
+    -- TODO: is it safe to always move to next? what if the user somehow
+    -- manages to have the checkbox checked? should that be a MoveToPrevious?
+    , label [for viewModel.text, onClick MoveToNext] [text viewModel.text]
     ]
 
 process state =
