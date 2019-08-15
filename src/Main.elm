@@ -16,4 +16,7 @@ update msg model =
 
 view model =
   -- TODO: is there something like <- that I can use? instead of wrapping in ()
-  div [] (List.map (\n -> div [] [ text n ]) model)
+  div [] (List.map stepToHTML model)
+
+stepToHTML step =
+  div [] [ text step ]
