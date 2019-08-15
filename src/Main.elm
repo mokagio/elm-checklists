@@ -6,10 +6,14 @@ main =
   Browser.sandbox { init = initialState, update = update, view = view }
 
 initialState =
-  [ "first"
-  , "second"
-  , "last"
+  [ Step "first"
+  , Step "second"
+  , Step "last"
   ]
+
+type alias Step =
+  { name : String
+  }
 
 update msg model =
   model
@@ -19,4 +23,4 @@ view model =
   div [] (List.map stepToHTML model)
 
 stepToHTML step =
-  div [] [ text step ]
+  div [] [ text step.name ]
