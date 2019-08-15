@@ -1,5 +1,6 @@
 import Browser
-import Html exposing (Html, div, text, ul, li)
+import Html exposing (Html, div, input, text)
+import Html.Attributes exposing (type_, checked)
 import Html.Events exposing (onClick)
 
 main =
@@ -23,14 +24,25 @@ update msg model =
 
 view model =
   -- TODO: is there something like <- that I can use? instead of wrapping in ()
-  ul [] (List.map toListItem (process model))
+  div [] (List.map toListItem (process model))
 
-toListItem string =
-  li [] [ text string ]
+toListItem viewModel =
+  div []
+    [ input [ type_ "checkbox", checked viewModel.completed  ] []
+    , text viewModel.text
+    ]
 
 process state =
   List.indexedMap
     -- TODO: figure out the Elm Html way of doing strikthrough, if any, or add
     -- an attribute to the element
-    (\index value -> if index >= state.current then value.name else "~~" ++ value.name ++ "~~")
+    (\index value -> makeViewModel value index state.current)
     state.steps
+
+makeViewModel step index currentIndex =
+  if index < currentIndex then
+    { text = step.name, completed = True, active = False }
+  else if index == currentIndex then
+    { text = step.name, completed = False, active = True }
+  else
+    { text = step.name, completed = False, active = False }
