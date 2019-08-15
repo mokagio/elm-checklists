@@ -1,5 +1,5 @@
 import Browser
-import Html exposing (Html, button, div, text)
+import Html exposing (Html, div, text, ul, li)
 import Html.Events exposing (onClick)
 
 main =
@@ -23,10 +23,10 @@ update msg model =
 
 view model =
   -- TODO: is there something like <- that I can use? instead of wrapping in ()
-  div [] (List.map stepToHTML (process model))
+  ul [] (List.map toListItem (process model))
 
-stepToHTML step =
-  div [] [ text step ]
+toListItem string =
+  li [] [ text string ]
 
 process state =
   List.indexedMap
