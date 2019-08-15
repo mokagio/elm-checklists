@@ -11,7 +11,7 @@ initialState =
     , Step "second"
     , Step "last"
     ]
-  , current = 0
+  , current = 1
   }
 
 type alias Step =
@@ -23,7 +23,14 @@ update msg model =
 
 view model =
   -- TODO: is there something like <- that I can use? instead of wrapping in ()
-  div [] (List.map stepToHTML model.steps)
+  div [] (List.map stepToHTML (process model))
 
 stepToHTML step =
-  div [] [ text step.name ]
+  div [] [ text step ]
+
+process state =
+  List.indexedMap
+    -- TODO: figure out the Elm Html way of doing strikthrough, if any, or add
+    -- an attribute to the element
+    (\index value -> if index >= state.current then value.name else "~~" ++ value.name ++ "~~")
+    state.steps
