@@ -8,12 +8,15 @@ set -eu
 
 # first of all, make sure everything is up to date from trunk and that we have
 # no garbage in the working copy
+git fetch
 git checkout .
-git checkout gh-pages
-git pull
 
 # build the project into an index.html
 elm make src/*.elm
+
+# now switch to the gh-pages branch
+git checkout gh-pages
+git rebase origin/master
 
 # now commit and push
 git add index.html
