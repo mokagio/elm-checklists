@@ -34,7 +34,7 @@ view model =
     , div [] (List.map toListItem (process model))
     , div [] (if isCompleted model then [text "all done ✅"] else [])
     , div [style "margin-top" "40px"] [text "Next steps:"]
-    , ul [] [ li [] [text "reactive style"], li [] [text "create checklist"], li [] [text "re-run checklist and track runs"] ]
+    , ul [] [ li [] [text "reactive style"], li [] [text "create checklist"], li [] [text "re-run checklist and track run timestamps"] ]
     ]
 
 isCompleted model =
