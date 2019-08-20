@@ -6,13 +6,15 @@ import Html.Events exposing (onClick)
 main =
   Browser.sandbox { init = initialState, update = update, view = view }
 
+defaultChecklist = Checklist [Step "first", Step "second", Step "third"]
+
 initialState =
-  { steps =
-    [ Step "first"
-    , Step "second"
-    , Step "last"
-    ]
+  { selectedChecklist = Just defaultChecklist
   , current = 0
+  }
+
+type alias Checklist =
+  { steps : List Step
   }
 
 type alias Step =
@@ -22,10 +24,14 @@ type alias Step =
 type Msg = MoveToNext
 
 update msg model =
-  if model.current < (List.length model.steps) then
-    { steps = model.steps, current = (model.current + 1) }
-  else
-    model
+  case model.selectedChecklist of
+    Nothing ->
+      model
+    Just checklist ->
+      if model.current < (List.length checklist.steps) then
+        { selectedChecklist = Just checklist, current = (model.current + 1) }
+      else
+        model
 
 view model =
   -- TODO: is there something like <- that I can use? instead of wrapping in ()
@@ -39,7 +45,11 @@ view model =
     ]
 
 isCompleted model =
-  model.current >= List.length model.steps
+  case model.selectedChecklist of
+    Nothing ->
+      False
+    Just checklist ->
+      model.current >= List.length checklist.steps
 
 toListItem viewModel =
   div []
@@ -57,11 +67,18 @@ toListItem viewModel =
     ]
 
 process state =
-  List.indexedMap
-    -- TODO: figure out the Elm Html way of doing strikthrough, if any, or add
-    -- an attribute to the element
-    (\index value -> makeViewModel value index state.current)
-    state.steps
+  case state.selectedChecklist of
+    Nothing ->
+      -- TODO: next step is to move this logic up the chain and return a whole
+      -- different core of the page depending on whether there is a selected
+      -- checklist or not
+      []
+    Just checklist ->
+      List.indexedMap
+      -- TODO: figure out the Elm Html way of doing strikthrough, if any, or add
+      -- an attribute to the element
+      (\index value -> makeViewModel value index state.current)
+      checklist.steps
 
 makeViewModel step index currentIndex =
   if index < currentIndex then
