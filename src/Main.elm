@@ -1,5 +1,5 @@
 import Browser
-import Html exposing (Html, div, h4, input, label, li, ul, text)
+import Html exposing (Html, div, h4, input, label, li, p, ul, text)
 import Html.Attributes exposing (checked, disabled, for, id, style, type_)
 import Html.Events exposing (onClick)
 
@@ -31,6 +31,7 @@ view model =
   -- TODO: is there something like <- that I can use? instead of wrapping in ()
   div []
     [ h4 [] [text "Checklists Demo"]
+    , p [] [text "Nothing of what you see is persisted ;)"]
     , div [] (List.map toListItem (process model))
     , div [] (if isCompleted model then [text "all done ✅"] else [])
     , div [style "margin-top" "40px"] [text "Next steps:"]
