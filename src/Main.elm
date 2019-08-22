@@ -13,6 +13,11 @@ initialState =
   , current = 0
   }
 
+type alias ChecklistRun =
+  { checklist : Checklist
+  , currentStep : Int
+  }
+
 type alias Checklist =
   { steps : List Step
   }
