@@ -1,6 +1,6 @@
 import Browser
-import Html exposing (Html, div, h4, input, label, li, p, ul, text)
-import Html.Attributes exposing (checked, disabled, for, id, style, type_)
+import Html exposing (Html, a, div, h4, input, label, li, p, ul, text)
+import Html.Attributes exposing (checked, disabled, for, href, id, style, type_)
 import Html.Events exposing (onClick)
 
 main =
@@ -9,6 +9,7 @@ main =
 defaultChecklist = Checklist [Step "first", Step "second", Step "third"] "numbered"
 
 initialState =
+  { selectedChecklist = Nothing
   , checklists =
     [ defaultChecklist
     , Checklist [Step "some", Step "some more"] "some and then some more"
@@ -29,19 +30,27 @@ type alias Step =
   { name : String
   }
 
-type Msg = MoveToNext
+type Msg
+  = MoveToNext
+  | Select Checklist
 
 update msg model =
-  case model.selectedChecklist of
-    Nothing ->
-      model
-    Just checklist ->
-      if checklist.currentStep < (List.length checklist.checklist.steps) then
-        { selectedChecklist = Just <| ChecklistRun checklist.checklist (checklist.currentStep + 1)
-        , checklists = model.checklists
-        }
-      else
-        model
+  case msg of
+    MoveToNext ->
+      case model.selectedChecklist of
+        Nothing ->
+          model
+        Just checklist ->
+          if checklist.currentStep < (List.length checklist.checklist.steps) then
+            { selectedChecklist = Just <| ChecklistRun checklist.checklist (checklist.currentStep + 1)
+            , checklists = model.checklists
+            }
+          else
+            model
+    Select selectedChecklist ->
+      { selectedChecklist = Just <| ChecklistRun selectedChecklist 0
+      , checklists = model.checklists
+      }
 
 view model =
   -- TODO: is there something like <- that I can use? instead of wrapping in ()
@@ -57,7 +66,7 @@ contentBody model =
   case model.selectedChecklist of
     Nothing ->
       div []
-        [ ul [] (List.map (\i -> li [] [text i.name]) model.checklists)
+        [ ul [] (List.map (\i -> li [] [a [href "#", onClick <| Select i] [text i.name]]) model.checklists)
         ]
     Just checklistRun ->
       div []
