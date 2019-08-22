@@ -9,8 +9,7 @@ main =
 defaultChecklist = Checklist [Step "first", Step "second", Step "third"]
 
 initialState =
-  { selectedChecklist = Just defaultChecklist
-  , current = 0
+  { selectedChecklist = Just <| ChecklistRun defaultChecklist 0
   }
 
 type alias ChecklistRun =
@@ -33,8 +32,8 @@ update msg model =
     Nothing ->
       model
     Just checklist ->
-      if model.current < (List.length checklist.steps) then
-        { selectedChecklist = Just checklist, current = (model.current + 1) }
+      if checklist.currentStep < (List.length checklist.checklist.steps) then
+        { selectedChecklist = Just <| ChecklistRun checklist.checklist (checklist.currentStep + 1) }
       else
         model
 
@@ -54,7 +53,7 @@ isCompleted model =
     Nothing ->
       False
     Just checklist ->
-      model.current >= List.length checklist.steps
+      checklist.currentStep >= List.length checklist.checklist.steps
 
 toListItem viewModel =
   div []
@@ -82,8 +81,8 @@ process state =
       List.indexedMap
       -- TODO: figure out the Elm Html way of doing strikthrough, if any, or add
       -- an attribute to the element
-      (\index value -> makeViewModel value index state.current)
-      checklist.steps
+      (\index value -> makeViewModel value index checklist.currentStep)
+      checklist.checklist.steps
 
 makeViewModel step index currentIndex =
   if index < currentIndex then
