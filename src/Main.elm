@@ -9,7 +9,10 @@ main =
 defaultChecklist = Checklist [Step "first", Step "second", Step "third"]
 
 initialState =
-  { selectedChecklist = Just <| ChecklistRun defaultChecklist 0
+  , checklists =
+    [ defaultChecklist
+    , Checklist [Step "some", Step "some more"]
+    ]
   }
 
 type alias ChecklistRun =
@@ -33,7 +36,9 @@ update msg model =
       model
     Just checklist ->
       if checklist.currentStep < (List.length checklist.checklist.steps) then
-        { selectedChecklist = Just <| ChecklistRun checklist.checklist (checklist.currentStep + 1) }
+        { selectedChecklist = Just <| ChecklistRun checklist.checklist (checklist.currentStep + 1)
+        , checklists = model.checklists
+        }
       else
         model
 
