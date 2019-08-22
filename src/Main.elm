@@ -6,12 +6,12 @@ import Html.Events exposing (onClick)
 main =
   Browser.sandbox { init = initialState, update = update, view = view }
 
-defaultChecklist = Checklist [Step "first", Step "second", Step "third"]
+defaultChecklist = Checklist [Step "first", Step "second", Step "third"] "numbered"
 
 initialState =
   , checklists =
     [ defaultChecklist
-    , Checklist [Step "some", Step "some more"]
+    , Checklist [Step "some", Step "some more"] "some and then some more"
     ]
   }
 
@@ -22,6 +22,7 @@ type alias ChecklistRun =
 
 type alias Checklist =
   { steps : List Step
+  , name: String
   }
 
 type alias Step =
