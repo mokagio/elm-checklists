@@ -48,18 +48,24 @@ view model =
   div []
     [ h4 [] [text "Checklists Demo"]
     , p [] [text "Nothing of what you see is persisted ;)"]
-    , div [] (List.map toListItem (process model))
-    , div [] (if isCompleted model then [text "all done ✅"] else [])
+    , contentBody model
     , div [style "margin-top" "40px"] [text "Next steps:"]
     , ul [] [ li [] [text "reactive style"], li [] [text "create checklist"], li [] [text "re-run checklist and track run timestamps"] ]
     ]
 
-isCompleted model =
+contentBody model =
   case model.selectedChecklist of
     Nothing ->
-      False
-    Just checklist ->
-      checklist.currentStep >= List.length checklist.checklist.steps
+      -- TODO: add select checklist UI
+      div [] []
+    Just checklistRun ->
+      div []
+        [ div [] (List.map toListItem (process checklistRun))
+        , div [] (if isCompleted checklistRun then [text "all done ✅"] else [])
+        ]
+
+isCompleted checklistRun =
+  checklistRun.currentStep >= List.length checklistRun.checklist.steps
 
 toListItem viewModel =
   div []
@@ -76,19 +82,12 @@ toListItem viewModel =
     , label [for viewModel.text, onClick MoveToNext] [text viewModel.text]
     ]
 
-process state =
-  case state.selectedChecklist of
-    Nothing ->
-      -- TODO: next step is to move this logic up the chain and return a whole
-      -- different core of the page depending on whether there is a selected
-      -- checklist or not
-      []
-    Just checklist ->
-      List.indexedMap
-      -- TODO: figure out the Elm Html way of doing strikthrough, if any, or add
-      -- an attribute to the element
-      (\index value -> makeViewModel value index checklist.currentStep)
-      checklist.checklist.steps
+process checklistRun =
+  List.indexedMap
+  -- TODO: figure out the Elm Html way of doing strikthrough, if any, or add
+  -- an attribute to the element
+  (\index value -> makeViewModel value index checklistRun.currentStep)
+  checklistRun.checklist.steps
 
 makeViewModel step index currentIndex =
   if index < currentIndex then
