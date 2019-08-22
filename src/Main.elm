@@ -1,45 +1,81 @@
 import Browser
-import Html exposing (Html, div, h4, input, label, li, p, ul, text)
-import Html.Attributes exposing (checked, disabled, for, id, style, type_)
+import Html exposing (Html, a, div, h4, input, label, li, p, ul, text)
+import Html.Attributes exposing (checked, disabled, for, href, id, style, type_)
 import Html.Events exposing (onClick)
 
 main =
   Browser.sandbox { init = initialState, update = update, view = view }
 
+defaultChecklist = Checklist [Step "first", Step "second", Step "third"] "numbered"
+
 initialState =
-  { steps =
-    [ Step "first"
-    , Step "second"
-    , Step "last"
+  { selectedChecklist = Nothing
+  , checklists =
+    [ defaultChecklist
+    , Checklist [Step "some", Step "some more"] "some and then some more"
     ]
-  , current = 0
+  }
+
+type alias ChecklistRun =
+  { checklist : Checklist
+  , currentStep : Int
+  }
+
+type alias Checklist =
+  { steps : List Step
+  , name: String
   }
 
 type alias Step =
   { name : String
   }
 
-type Msg = MoveToNext
+type Msg
+  = MoveToNext
+  | Select Checklist
 
 update msg model =
-  if model.current < (List.length model.steps) then
-    { steps = model.steps, current = (model.current + 1) }
-  else
-    model
+  case msg of
+    MoveToNext ->
+      case model.selectedChecklist of
+        Nothing ->
+          model
+        Just checklist ->
+          if checklist.currentStep < (List.length checklist.checklist.steps) then
+            { selectedChecklist = Just <| ChecklistRun checklist.checklist (checklist.currentStep + 1)
+            , checklists = model.checklists
+            }
+          else
+            model
+    Select selectedChecklist ->
+      { selectedChecklist = Just <| ChecklistRun selectedChecklist 0
+      , checklists = model.checklists
+      }
 
 view model =
   -- TODO: is there something like <- that I can use? instead of wrapping in ()
   div []
     [ h4 [] [text "Checklists Demo"]
     , p [] [text "Nothing of what you see is persisted ;)"]
-    , div [] (List.map toListItem (process model))
-    , div [] (if isCompleted model then [text "all done ✅"] else [])
+    , contentBody model
     , div [style "margin-top" "40px"] [text "Next steps:"]
     , ul [] [ li [] [text "reactive style"], li [] [text "create checklist"], li [] [text "re-run checklist and track run timestamps"] ]
     ]
 
-isCompleted model =
-  model.current >= List.length model.steps
+contentBody model =
+  case model.selectedChecklist of
+    Nothing ->
+      div []
+        [ ul [] (List.map (\i -> li [] [a [href "#", onClick <| Select i] [text i.name]]) model.checklists)
+        ]
+    Just checklistRun ->
+      div []
+        [ div [] (List.map toListItem (process checklistRun))
+        , div [] (if isCompleted checklistRun then [text "all done ✅"] else [])
+        ]
+
+isCompleted checklistRun =
+  checklistRun.currentStep >= List.length checklistRun.checklist.steps
 
 toListItem viewModel =
   div []
@@ -56,12 +92,12 @@ toListItem viewModel =
     , label [for viewModel.text, onClick MoveToNext] [text viewModel.text]
     ]
 
-process state =
+process checklistRun =
   List.indexedMap
-    -- TODO: figure out the Elm Html way of doing strikthrough, if any, or add
-    -- an attribute to the element
-    (\index value -> makeViewModel value index state.current)
-    state.steps
+  -- TODO: figure out the Elm Html way of doing strikthrough, if any, or add
+  -- an attribute to the element
+  (\index value -> makeViewModel value index checklistRun.currentStep)
+  checklistRun.checklist.steps
 
 makeViewModel step index currentIndex =
   if index < currentIndex then
