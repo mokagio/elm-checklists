@@ -56,8 +56,9 @@ view model =
 contentBody model =
   case model.selectedChecklist of
     Nothing ->
-      -- TODO: add select checklist UI
-      div [] []
+      div []
+        [ ul [] (List.map (\i -> li [] [text i.name]) model.checklists)
+        ]
     Just checklistRun ->
       div []
         [ div [] (List.map toListItem (process checklistRun))
