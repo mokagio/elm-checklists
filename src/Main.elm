@@ -1,6 +1,6 @@
 import Browser
-import Html exposing (Html, a, div, h4, input, label, li, p, ul, text)
-import Html.Attributes exposing (checked, disabled, for, href, id, style, type_)
+import Html exposing (..)
+import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 
 main =
