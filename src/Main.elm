@@ -66,7 +66,7 @@ contentBody model =
   case model.selectedChecklist of
     Nothing ->
       div []
-        [ ul [] (List.map (\i -> li [] [a [href "#", onClick <| Select i] [text i.name]]) model.checklists)
+        [ ul [] (List.map (\i -> li [] [a [href "#", onClick <| Select i] [text <| "👉 " ++ i.name]]) model.checklists)
         ]
     Just checklistRun ->
       div []
