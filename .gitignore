@@ -1,4 +1,5 @@
-# Taken from https://github.com/github/gitignore/blob/e92f8db7a027af8cc25da2dc0758317e39697684/Elm.gitignore
+# Taken from
+# https://github.com/github/gitignore/blob/e92f8db7a027af8cc25da2dc0758317e39697684/Elm.gitignore
 
 # elm-package generated files
 elm-stuff
@@ -8,3 +9,9 @@ repl-temp-*
 # this is the build output of the `elm make` command and depends on the content
 # of the Elm sources.
 elm.js
+
+# See
+# https://github.com/github/gitignore/blob/499ae899e7b54e701e878759f73d9092302fd07a/Node.gitignore
+# for more things that could go in here concerning npm and Node
+
+node_modules/

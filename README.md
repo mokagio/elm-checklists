@@ -2,7 +2,7 @@
 Run the following command from the root of this project:
 
 ```
-elm make src/Main.elm --output=elm.js && elm reactor
+./bin/build
 ```
 
-Then open `http://localhost:8000/index.html` in your browser.
+Then open `http://localhost:8000` in your browser.
