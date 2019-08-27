@@ -71,7 +71,7 @@ contentBody model =
     Just checklistRun ->
       div []
         [ div [] (List.map toListItem (process checklistRun))
-        , div [] (if isCompleted checklistRun then [text "all done ✅"] else [])
+        , div [class "pt-2"] (if isCompleted checklistRun then [text "all done ✅"] else [])
         ]
 
 isCompleted checklistRun =
