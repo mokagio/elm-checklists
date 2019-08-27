@@ -1,0 +1,1 @@
+node_modules/elm-live/bin/elm-live.js src/Main.elm -- --output=elm.js

@@ -1,6 +1,6 @@
 import Browser
-import Html exposing (Html, a, div, h4, input, label, li, p, ul, text)
-import Html.Attributes exposing (checked, disabled, for, href, id, style, type_)
+import Html exposing (..)
+import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 
 main =
@@ -54,24 +54,24 @@ update msg model =
 
 view model =
   -- TODO: is there something like <- that I can use? instead of wrapping in ()
-  div []
-    [ h4 [] [text "Checklists Demo"]
-    , p [] [text "Nothing of what you see is persisted ;)"]
-    , contentBody model
-    , div [style "margin-top" "40px"] [text "Next steps:"]
-    , ul [] [ li [] [text "reactive style"], li [] [text "create checklist"], li [] [text "re-run checklist and track run timestamps"] ]
+  div [class "container mx-auto py-8"]
+    [ h1 [class "text-3xl pb-2"] [text "Checklists Demo"]
+    , p [class "italic"] [text "Nothing of what you see is persisted ;)"]
+    , div [class "py-4"] [contentBody model]
+    , div [class "pt-4 pb-2"] [h3 [class "text-xl"] [text "Next steps:"]]
+    , ul [class "list-disc list-inside"] [ li [] [text "reactive style"], li [] [text "create checklist"], li [] [text "re-run checklist and track run timestamps"] ]
     ]
 
 contentBody model =
   case model.selectedChecklist of
     Nothing ->
       div []
-        [ ul [] (List.map (\i -> li [] [a [href "#", onClick <| Select i] [text i.name]]) model.checklists)
+        [ ul [] (List.map (\i -> li [] [a [href "#", onClick <| Select i] [text <| "👉 " ++ i.name]]) model.checklists)
         ]
     Just checklistRun ->
       div []
         [ div [] (List.map toListItem (process checklistRun))
-        , div [] (if isCompleted checklistRun then [text "all done ✅"] else [])
+        , div [class "pt-2"] (if isCompleted checklistRun then [text "all done ✅"] else [])
         ]
 
 isCompleted checklistRun =
@@ -83,6 +83,7 @@ toListItem viewModel =
     -- there are multiple steps with the same name
     [ input
       [ type_ "checkbox"
+      , class "mr-2"
       , checked viewModel.completed
       , disabled <| not viewModel.active
       , id viewModel.text
