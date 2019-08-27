@@ -59,7 +59,7 @@ view model =
     , p [class "italic"] [text "Nothing of what you see is persisted ;)"]
     , div [class "py-4"] [contentBody model]
     , div [class "pt-4 pb-2"] [h3 [class "text-xl"] [text "Next steps:"]]
-    , ul [] [ li [] [text "reactive style"], li [] [text "create checklist"], li [] [text "re-run checklist and track run timestamps"] ]
+    , ul [class "list-disc list-inside"] [ li [] [text "reactive style"], li [] [text "create checklist"], li [] [text "re-run checklist and track run timestamps"] ]
     ]
 
 contentBody model =
