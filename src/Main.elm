@@ -54,17 +54,13 @@ update msg model =
 
                 Just checklist ->
                     if checklist.currentStep < List.length checklist.checklist.steps then
-                        { selectedChecklist = Just <| ChecklistRun checklist.checklist (checklist.currentStep + 1)
-                        , checklists = model.checklists
-                        }
+                        { model | selectedChecklist = Just <| ChecklistRun checklist.checklist (checklist.currentStep + 1) }
 
                     else
                         model
 
         Select selectedChecklist ->
-            { selectedChecklist = Just <| ChecklistRun selectedChecklist 0
-            , checklists = model.checklists
-            }
+            { model | selectedChecklist = Just <| ChecklistRun selectedChecklist 0 }
 
 
 view model =
