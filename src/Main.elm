@@ -1,5 +1,16 @@
 module Main exposing (Checklist, ChecklistRun, Msg(..), Step, contentBody, defaultChecklist, initialState, isCompleted, main, makeViewModel, process, toListItem, update, view)
 
+{-| This is a playground experiment for me to learn
+Elm and at the same time prototype a repeatable
+checklist app.
+
+Using these as reference:
+
+  - <https://guide.elm-lang.org/architecture/>
+  - <https://github.com/evancz/elm-todomvc/tree/07e3d4e5259f337d5eba781319b3a916e28aca99>
+
+-}
+
 import Browser
 import Html exposing (..)
 import Html.Attributes exposing (..)
