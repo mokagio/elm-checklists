@@ -28,6 +28,11 @@ type alias Model =
     }
 
 
+type Mode
+    = Create NewChecklistParameters
+    | Run ChecklistRun
+
+
 init : Model
 init =
     { selectedChecklist = Nothing
