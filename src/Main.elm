@@ -38,6 +38,12 @@ init =
     }
 
 
+type Mode
+    = Browsing Checklists
+    | Adding ChecklistParameters
+    | Running ChecklistRun
+
+
 type alias ChecklistRun =
     { checklist : Checklist
     , currentStep : Int
