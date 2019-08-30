@@ -83,10 +83,19 @@ view : Model -> Html Msg
 view model =
     div [ class "container mx-auto py-8" ]
         [ h1 [ class "text-3xl pb-2" ] [ text "Checklists Demo" ]
-        , p [ class "italic" ] [ text "Nothing of what you see is persisted ;)" ]
+        , p
+            [ class "italic" ]
+            [ text "Nothing of what you see is persisted ;)" ]
         , div [ class "py-4" ] [ contentBody model ]
-        , div [ class "pt-4 pb-2" ] [ h3 [ class "text-xl" ] [ text "Next steps:" ] ]
-        , ul [ class "list-disc list-inside" ] [ li [] [ text "reactive style" ], li [] [ text "create checklist" ], li [] [ text "re-run checklist and track run timestamps" ] ]
+        , div
+            [ class "pt-4 pb-2" ]
+            [ h3 [ class "text-xl" ] [ text "Next steps:" ] ]
+        , ul
+            [ class "list-disc list-inside" ]
+            [ li [] [ text "reactive style" ]
+            , li [] [ text "create checklist" ]
+            , li [] [ text "re-run checklist and track run timestamps" ]
+            ]
         ]
 
 
@@ -119,8 +128,8 @@ isCompleted checklistRun =
 toListItem : { text : String, completed : Bool, active : Bool } -> Html Msg
 toListItem viewModel =
     div []
-        -- TODO: using viewModel.text for the id might result in inconsistencies if
-        -- there are multiple steps with the same name
+        -- TODO: using viewModel.text for the id might result in
+        -- inconsistencies if there are multiple steps with the same name
         [ input
             [ type_ "checkbox"
             , class "mr-2"
@@ -131,8 +140,11 @@ toListItem viewModel =
             []
 
         -- TODO: is it safe to always move to next? what if the user somehow
-        -- manages to have the checkbox checked? should that be a MoveToPrevious?
-        , label [ for viewModel.text, onClick MoveToNext ] [ text viewModel.text ]
+        -- manages to have the checkbox checked? should that be a
+        -- MoveToPrevious?
+        , label
+            [ for viewModel.text, onClick MoveToNext ]
+            [ text viewModel.text ]
         ]
 
 
