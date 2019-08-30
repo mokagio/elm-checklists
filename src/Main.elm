@@ -14,6 +14,12 @@ defaultChecklist =
     Checklist [ Step "first", Step "second", Step "third" ] "numbered"
 
 
+type alias Model =
+    { selectedChecklist : Maybe ChecklistRun
+    , checklists : List Checklist
+    }
+
+
 initialState =
     { selectedChecklist = Nothing
     , checklists =
