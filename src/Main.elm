@@ -120,12 +120,17 @@ viewModel : Model -> Html Msg
 viewModel model =
     case model.selectedChecklist of
         Nothing ->
-            div []
-                [ ul [] (List.map viewChecklistEntry model.checklists)
-                ]
+            viewChecklistList model.checklists
 
         Just checklistRun ->
             viewChecklistRun checklistRun
+
+
+viewChecklistList : List Checklist -> Html Msg
+viewChecklistList checklists =
+    div []
+        [ ul [] (List.map viewChecklistEntry checklists)
+        ]
 
 
 viewChecklistEntry : Checklist -> Html Msg
