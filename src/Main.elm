@@ -125,17 +125,17 @@ isCompleted checklistRun =
     checklistRun.currentStep >= List.length checklistRun.checklist.steps
 
 
-toListItem : { text : String, completed : Bool, active : Bool } -> Html Msg
-toListItem viewModel =
+toListItem : ChecklistViewData -> Html Msg
+toListItem viewData =
     div []
-        -- TODO: using viewModel.text for the id might result in
+        -- TODO: using viewData.text for the id might result in
         -- inconsistencies if there are multiple steps with the same name
         [ input
             [ type_ "checkbox"
             , class "mr-2"
-            , checked viewModel.completed
-            , disabled <| not viewModel.active
-            , id viewModel.text
+            , checked viewData.completed
+            , disabled <| not viewData.active
+            , id viewData.text
             ]
             []
 
@@ -143,19 +143,26 @@ toListItem viewModel =
         -- manages to have the checkbox checked? should that be a
         -- MoveToPrevious?
         , label
-            [ for viewModel.text, onClick MoveToNext ]
-            [ text viewModel.text ]
+            [ for viewData.text, onClick MoveToNext ]
+            [ text viewData.text ]
         ]
 
 
-process : ChecklistRun -> List { text : String, completed : Bool, active : Bool }
+process : ChecklistRun -> List ChecklistViewData
 process checklistRun =
     List.indexedMap
         (\index value -> makeViewModel value index checklistRun.currentStep)
         checklistRun.checklist.steps
 
 
-makeViewModel : Step -> Int -> Int -> { text : String, completed : Bool, active : Bool }
+type alias ChecklistViewData =
+    { text : String
+    , completed : Bool
+    , active : Bool
+    }
+
+
+makeViewModel : Step -> Int -> Int -> ChecklistViewData
 makeViewModel step index currentIndex =
     if index < currentIndex then
         { text = step.name, completed = True, active = False }
