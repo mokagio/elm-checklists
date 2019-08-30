@@ -23,7 +23,7 @@ main =
 
 
 type alias Model =
-    { selectedChecklist : Maybe ChecklistRun
+    { mode : Maybe Mode
     , checklists : List Checklist
     }
 
@@ -35,7 +35,7 @@ type Mode
 
 init : Model
 init =
-    { selectedChecklist = Nothing
+    { mode = Nothing
     , checklists =
         [ Checklist [ Step "first", Step "second", Step "third" ] "numbered"
         , Checklist [ Step "some", Step "some more" ] "some and then some more"
@@ -75,19 +75,24 @@ update : Msg -> Model -> Model
 update msg model =
     case msg of
         MoveToNext ->
-            case model.selectedChecklist of
+            case model.mode of
                 Nothing ->
                     model
 
-                Just checklist ->
-                    if checklist.currentStep < List.length checklist.checklist.steps then
-                        { model | selectedChecklist = Just <| ChecklistRun checklist.checklist (checklist.currentStep + 1) }
+                Just mode ->
+                    case mode of
+                        Run checklist ->
+                            if checklist.currentStep < List.length checklist.checklist.steps then
+                                { model | mode = Just <| Run <| ChecklistRun checklist.checklist (checklist.currentStep + 1) }
 
-                    else
-                        model
+                            else
+                                model
+
+                        _ ->
+                            model
 
         Select selectedChecklist ->
-            { model | selectedChecklist = Just <| ChecklistRun selectedChecklist 0 }
+            { model | mode = Just <| Run <| ChecklistRun selectedChecklist 0 }
 
 
 view : Model -> Html Msg
@@ -118,12 +123,17 @@ view model =
 
 viewModel : Model -> Html Msg
 viewModel model =
-    case model.selectedChecklist of
+    case model.mode of
         Nothing ->
             viewChecklistList model.checklists
 
-        Just checklistRun ->
-            viewChecklistRun checklistRun
+        Just mode ->
+            case mode of
+                Run checklistRun ->
+                    viewChecklistRun checklistRun
+
+                _ ->
+                    div [] []
 
 
 viewChecklistList : List Checklist -> Html Msg
