@@ -69,6 +69,10 @@ type alias NewChecklistParameters =
 type Msg
     = MoveToNext
     | Select Checklist
+    | Add
+    | AddTitle String
+    | AddStep String
+    | SaveChecklist
 
 
 update : Msg -> Model -> Model
@@ -93,6 +97,9 @@ update msg model =
 
         Select selectedChecklist ->
             { model | mode = Just <| Run <| ChecklistRun selectedChecklist 0 }
+
+        _ ->
+            model
 
 
 view : Model -> Html Msg
