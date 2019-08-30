@@ -86,7 +86,7 @@ view model =
         , p
             [ class "italic" ]
             [ text "Nothing of what you see is persisted ;)" ]
-        , div [ class "py-4" ] [ contentBody model ]
+        , div [ class "py-4" ] [ viewModel model ]
         , div
             [ class "pt-4 pb-2" ]
             [ h3 [ class "text-xl" ] [ text "Next steps:" ] ]
@@ -99,12 +99,18 @@ view model =
         ]
 
 
-contentBody : Model -> Html Msg
-contentBody model =
+
+-- TODO: I don't like the name viewModel because it carries over too much
+-- meaning in other contexts, I hope as the type system evolves I'll be able to
+-- have clearer names here.
+
+
+viewModel : Model -> Html Msg
+viewModel model =
     case model.selectedChecklist of
         Nothing ->
             div []
-                [ ul [] (List.map (\i -> li [] [ a [ href "#", onClick <| Select i ] [ text <| "👉 " ++ i.name ] ]) model.checklists)
+                [ ul [] (List.map viewChecklistEntry model.checklists)
                 ]
 
         Just checklistRun ->
@@ -118,6 +124,16 @@ contentBody model =
                         []
                     )
                 ]
+
+
+viewChecklistEntry : Checklist -> Html Msg
+viewChecklistEntry checklist =
+    li
+        []
+        [ a
+            [ href "#", onClick <| Select checklist ]
+            [ text <| "👉 " ++ checklist.name ]
+        ]
 
 
 isCompleted : ChecklistRun -> Bool
