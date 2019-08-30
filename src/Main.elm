@@ -114,16 +114,7 @@ viewModel model =
                 ]
 
         Just checklistRun ->
-            div []
-                [ div [] (List.map toListItem (process checklistRun))
-                , div [ class "pt-2" ]
-                    (if isCompleted checklistRun then
-                        [ text "all done ✅" ]
-
-                     else
-                        []
-                    )
-                ]
+            viewChecklistRun checklistRun
 
 
 viewChecklistEntry : Checklist -> Html Msg
@@ -141,8 +132,33 @@ isCompleted checklistRun =
     checklistRun.currentStep >= List.length checklistRun.checklist.steps
 
 
-toListItem : ChecklistViewData -> Html Msg
-toListItem viewData =
+viewChecklistRun : ChecklistRun -> Html Msg
+viewChecklistRun checklistRun =
+    let
+        stepsViewData =
+            makeViewDataForSteps checklistRun
+    in
+    div []
+        [ div [] (List.map viewStep stepsViewData)
+        , div [ class "pt-2" ]
+            (if isCompleted checklistRun then
+                [ text "all done ✅" ]
+
+             else
+                []
+            )
+        ]
+
+
+type alias ChecklistStepViewData =
+    { text : String
+    , completed : Bool
+    , active : Bool
+    }
+
+
+viewStep : ChecklistStepViewData -> Html Msg
+viewStep viewData =
     div []
         -- TODO: using viewData.text for the id might result in
         -- inconsistencies if there are multiple steps with the same name
@@ -164,21 +180,14 @@ toListItem viewData =
         ]
 
 
-process : ChecklistRun -> List ChecklistViewData
-process checklistRun =
+makeViewDataForSteps : ChecklistRun -> List ChecklistStepViewData
+makeViewDataForSteps checklistRun =
     List.indexedMap
         (\index value -> makeViewModel value index checklistRun.currentStep)
         checklistRun.checklist.steps
 
 
-type alias ChecklistViewData =
-    { text : String
-    , completed : Bool
-    , active : Bool
-    }
-
-
-makeViewModel : Step -> Int -> Int -> ChecklistViewData
+makeViewModel : Step -> Int -> Int -> ChecklistStepViewData
 makeViewModel step index currentIndex =
     if index < currentIndex then
         { text = step.name, completed = True, active = False }
