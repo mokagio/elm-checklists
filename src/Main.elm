@@ -6,12 +6,9 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 
 
+main : Program () Model Msg
 main =
-    Browser.sandbox { init = initialState, update = update, view = view }
-
-
-defaultChecklist =
-    Checklist [ Step "first", Step "second", Step "third" ] "numbered"
+    Browser.sandbox { init = init, update = update, view = view }
 
 
 type alias Model =
@@ -20,10 +17,11 @@ type alias Model =
     }
 
 
-initialState =
+init : Model
+init =
     { selectedChecklist = Nothing
     , checklists =
-        [ defaultChecklist
+        [ Checklist [ Step "first", Step "second", Step "third" ] "numbered"
         , Checklist [ Step "some", Step "some more" ] "some and then some more"
         ]
     }
@@ -51,6 +49,7 @@ type Msg
     | Select Checklist
 
 
+update : Msg -> Model -> Model
 update msg model =
     case msg of
         MoveToNext ->
@@ -69,6 +68,7 @@ update msg model =
             { model | selectedChecklist = Just <| ChecklistRun selectedChecklist 0 }
 
 
+view : Model -> Html Msg
 view model =
     div [ class "container mx-auto py-8" ]
         [ h1 [ class "text-3xl pb-2" ] [ text "Checklists Demo" ]
@@ -79,6 +79,7 @@ view model =
         ]
 
 
+contentBody : Model -> Html Msg
 contentBody model =
     case model.selectedChecklist of
         Nothing ->
@@ -99,10 +100,12 @@ contentBody model =
                 ]
 
 
+isCompleted : ChecklistRun -> Bool
 isCompleted checklistRun =
     checklistRun.currentStep >= List.length checklistRun.checklist.steps
 
 
+toListItem : { text : String, completed : Bool, active : Bool } -> Html Msg
 toListItem viewModel =
     div []
         -- TODO: using viewModel.text for the id might result in inconsistencies if
@@ -122,12 +125,14 @@ toListItem viewModel =
         ]
 
 
+process : ChecklistRun -> List { text : String, completed : Bool, active : Bool }
 process checklistRun =
     List.indexedMap
         (\index value -> makeViewModel value index checklistRun.currentStep)
         checklistRun.checklist.steps
 
 
+makeViewModel : Step -> Int -> Int -> { text : String, completed : Bool, active : Bool }
 makeViewModel step index currentIndex =
     if index < currentIndex then
         { text = step.name, completed = True, active = False }
