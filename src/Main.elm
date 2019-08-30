@@ -55,6 +55,12 @@ type alias Step =
     }
 
 
+type alias NewChecklistParameters =
+    { name : Maybe String
+    , steps : List Step
+    }
+
+
 type Msg
     = MoveToNext
     | Select Checklist
