@@ -64,7 +64,6 @@ update msg model =
 
 
 view model =
-    -- TODO: is there something like <- that I can use? instead of wrapping in ()
     div [ class "container mx-auto py-8" ]
         [ h1 [ class "text-3xl pb-2" ] [ text "Checklists Demo" ]
         , p [ class "italic" ] [ text "Nothing of what you see is persisted ;)" ]
@@ -119,8 +118,6 @@ toListItem viewModel =
 
 process checklistRun =
     List.indexedMap
-        -- TODO: figure out the Elm Html way of doing strikthrough, if any, or add
-        -- an attribute to the element
         (\index value -> makeViewModel value index checklistRun.currentStep)
         checklistRun.checklist.steps
 
