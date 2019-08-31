@@ -181,6 +181,7 @@ viewChecklistParameters parameters =
         div
             []
             [ div [] [ text parameters.name ]
+            , div [] (List.map (\s -> text s.name) parameters.steps)
             , div
                 []
                 [ input
