@@ -14,7 +14,7 @@ Using these as reference:
 import Browser
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick)
+import Html.Events exposing (keyCode, on, onClick)
 import Json.Decode as Json
 
 
@@ -231,3 +231,16 @@ makeViewModel step index currentIndex =
 
     else
         { text = step.name, completed = False, active = False }
+
+
+onEnter : Msg -> Attribute Msg
+onEnter msg =
+    let
+        isEnter code =
+            if code == 13 then
+                Json.succeed msg
+
+            else
+                Json.fail "not ENTER"
+    in
+    on "keydown" (Json.andThen isEnter keyCode)
