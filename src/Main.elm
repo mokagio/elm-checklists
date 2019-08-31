@@ -61,7 +61,7 @@ type alias Step =
 
 
 type alias NewChecklistParameters =
-    { name : Maybe String
+    { name : String
     , steps : List Step
     }
 
