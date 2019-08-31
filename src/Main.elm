@@ -14,8 +14,9 @@ Using these as reference:
 import Browser
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (keyCode, on, onClick)
+import Html.Events exposing (keyCode, on, onClick, onInput)
 import Json.Decode as Json
+import Task
 
 
 main : Program () Model Msg
@@ -71,7 +72,8 @@ type Msg
     = MoveToNext
     | Select Checklist
     | Add
-    | AddTitle String
+    | UpdateTitle String
+    | SaveTitle
     | AddStep String
     | SaveChecklist
 
@@ -98,6 +100,32 @@ update msg model =
 
         Select selectedChecklist ->
             { model | mode = Just <| Run <| ChecklistRun selectedChecklist 0 }
+
+        UpdateTitle title ->
+            case model.mode of
+                Nothing ->
+                    model
+
+                Just mode ->
+                    case mode of
+                        Create parameters ->
+                            { model | mode = Just <| Create <| { parameters | name = title } }
+
+                        _ ->
+                            model
+
+        SaveTitle ->
+            case model.mode of
+                Nothing ->
+                    model
+
+                Just mode ->
+                    case mode of
+                        Create parameters ->
+                            { model | mode = Just <| Create <| { parameters | steps = [ Step "" ] } }
+
+                        _ ->
+                            model
 
         _ ->
             model
@@ -140,8 +168,45 @@ viewModel model =
                 Run checklistRun ->
                     viewChecklistRun checklistRun
 
-                _ ->
-                    div [] []
+                Create parameters ->
+                    viewChecklistParameters parameters
+
+
+viewChecklistParameters : NewChecklistParameters -> Html Msg
+viewChecklistParameters parameters =
+    if String.isEmpty parameters.name || List.isEmpty parameters.steps then
+        viewChecklistParametersEmpty parameters
+
+    else
+        div
+            []
+            [ div [] [ text parameters.name ]
+            , div
+                []
+                [ input
+                    [ type_ "text"
+                    , placeholder "Next step"
+                    , autofocus True
+                    ]
+                    []
+                ]
+            ]
+
+
+viewChecklistParametersEmpty : NewChecklistParameters -> Html Msg
+viewChecklistParametersEmpty parameters =
+    div
+        []
+        [ label [] [ text "What's the name of your checklist?" ]
+        , input
+            [ type_ "text"
+            , placeholder "My awesome checklist"
+            , autofocus True
+            , onInput UpdateTitle
+            , onEnter SaveTitle
+            ]
+            []
+        ]
 
 
 viewChecklistList : List Checklist -> Html Msg
