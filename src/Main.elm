@@ -75,6 +75,7 @@ type Msg
     | Select Checklist
     | CreateChecklist CreateMsg
     | SaveChecklist
+    | DiscardChecklist
 
 
 type CreateMsg
@@ -135,6 +136,9 @@ update msg model =
 
                         _ ->
                             model
+
+        DiscardChecklist ->
+            { model | mode = Nothing }
 
 
 updateCreate : CreateMsg -> NewChecklistParameters -> NewChecklistParameters
@@ -241,7 +245,8 @@ viewChecklistParameters parameters =
                         ]
                         []
                     ]
-                , button [ onClick SaveChecklist ] [ text "Done" ]
+                , div [] [ button [ onClick SaveChecklist ] [ text "Save" ] ]
+                , div [] [ button [ onClick DiscardChecklist ] [ text "Cancel" ] ]
                 ]
 
 
