@@ -64,18 +64,24 @@ type alias Step =
 
 type alias NewChecklistParameters =
     { name : String
+    , editingName : Maybe String
     , steps : List Step
+    , editingStep : Maybe Step
     }
 
 
 type Msg
     = MoveToNext
     | Select Checklist
-    | Add
-    | UpdateTitle String
+    | CreateChecklist CreateMsg
+
+
+type CreateMsg
+    = UpdateTitle String
     | SaveTitle
-    | AddStep String
-    | SaveChecklist
+    | UpdateStep String
+    | SaveStep
+    | Done
 
 
 update : Msg -> Model -> Model
@@ -101,7 +107,7 @@ update msg model =
         Select selectedChecklist ->
             { model | mode = Just <| Run <| ChecklistRun selectedChecklist 0 }
 
-        UpdateTitle title ->
+        CreateChecklist createMsg ->
             case model.mode of
                 Nothing ->
                     model
@@ -109,23 +115,25 @@ update msg model =
                 Just mode ->
                     case mode of
                         Create parameters ->
-                            { model | mode = Just <| Create <| { parameters | name = title } }
+                            { model | mode = Just <| Create <| updateCreate createMsg parameters }
 
                         _ ->
                             model
+
+
+updateCreate : CreateMsg -> NewChecklistParameters -> NewChecklistParameters
+updateCreate msg model =
+    case msg of
+        UpdateTitle newTitle ->
+            { model | editingName = Just newTitle }
 
         SaveTitle ->
-            case model.mode of
+            case model.editingName of
                 Nothing ->
                     model
 
-                Just mode ->
-                    case mode of
-                        Create parameters ->
-                            { model | mode = Just <| Create <| { parameters | steps = [ Step "" ] } }
-
-                        _ ->
-                            model
+                Just editingName ->
+                    { model | name = editingName, editingName = Nothing }
 
         _ ->
             model
@@ -174,28 +182,31 @@ viewModel model =
 
 viewChecklistParameters : NewChecklistParameters -> Html Msg
 viewChecklistParameters parameters =
-    if String.isEmpty parameters.name || List.isEmpty parameters.steps then
-        viewChecklistParametersEmpty parameters
+    case parameters.editingName of
+        Just name ->
+            viewChecklistParametersEmpty name
 
-    else
-        div
-            []
-            [ div [] [ text parameters.name ]
-            , div [] (List.map (\s -> text s.name) parameters.steps)
-            , div
+        Nothing ->
+            div
                 []
-                [ input
-                    [ type_ "text"
-                    , placeholder "Next step"
-                    , autofocus True
+                [ div [] [ text parameters.name ]
+                , div []
+                    [ ul [] (List.map (\s -> li [] [ text s.name ]) parameters.steps)
                     ]
+                , div
                     []
+                    [ input
+                        [ type_ "text"
+                        , placeholder "Next step"
+                        , autofocus True
+                        ]
+                        []
+                    ]
                 ]
-            ]
 
 
-viewChecklistParametersEmpty : NewChecklistParameters -> Html Msg
-viewChecklistParametersEmpty parameters =
+viewChecklistParametersEmpty : String -> Html Msg
+viewChecklistParametersEmpty titleValue =
     div
         []
         [ label [] [ text "What's the name of your checklist?" ]
@@ -203,8 +214,9 @@ viewChecklistParametersEmpty parameters =
             [ type_ "text"
             , placeholder "My awesome checklist"
             , autofocus True
-            , onInput UpdateTitle
-            , onEnter SaveTitle
+            , value titleValue
+            , onInput (\i -> CreateChecklist <| UpdateTitle i)
+            , onEnter (CreateChecklist SaveTitle)
             ]
             []
         ]
