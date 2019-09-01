@@ -176,7 +176,7 @@ updateCreate msg model =
 
 view : Model -> Html Msg
 view model =
-    div [ class "container mx-auto py-8" ]
+    div [ class "container mx-auto py-8 px-6" ]
         [ h1 [ class "text-3xl pb-2" ] [ text "Checklists Demo" ]
         , p
             [ class "italic" ]
