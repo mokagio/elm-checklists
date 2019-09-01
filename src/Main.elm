@@ -246,7 +246,12 @@ viewChecklistParameters parameters =
                     [ input
                         [ type_ "text"
                         , placeholder "Next step"
-                        , autofocus True -- this doesn't seem to work, but only the very first time the node renders (i.e. the first step)
+
+                        -- autofocus doesn't work on the first render (i.e.
+                        -- first new step), but when this node is re-rendered
+                        -- in the DOM the second time it's fine...
+                        -- See also https://github.com/elm/html/issues/186
+                        , autofocus True
                         , value value_
                         , onInput (\i -> UpdateChecklist <| UpdateStep i)
                         , onEnter (UpdateChecklist SaveStep)
