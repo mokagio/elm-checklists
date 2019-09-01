@@ -188,7 +188,6 @@ view model =
         , ul
             [ class "list-disc list-inside" ]
             [ li [] [ text "reactive style" ]
-            , li [] [ text "create checklist" ]
             , li [] [ text "re-run checklist and track run timestamps" ]
             ]
         ]
