@@ -14,7 +14,9 @@ Using these as reference:
 import Browser
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick)
+import Html.Events exposing (keyCode, on, onClick, onInput)
+import Json.Decode as Json
+import Task
 
 
 main : Program () Model Msg
@@ -23,17 +25,22 @@ main =
 
 
 type alias Model =
-    { selectedChecklist : Maybe ChecklistRun
+    { mode : Maybe Mode
     , checklists : List Checklist
     }
 
 
+type Mode
+    = Create NewChecklistParameters
+    | Run ChecklistRun
+
+
 init : Model
 init =
-    { selectedChecklist = Nothing
+    { mode = Nothing
     , checklists =
-        [ Checklist [ Step "first", Step "second", Step "third" ] "numbered"
-        , Checklist [ Step "some", Step "some more" ] "some and then some more"
+        [ Checklist "numbered" [ Step "first", Step "second", Step "third" ]
+        , Checklist "some and then some more" [ Step "some", Step "some more" ]
         ]
     }
 
@@ -45,8 +52,8 @@ type alias ChecklistRun =
 
 
 type alias Checklist =
-    { steps : List Step
-    , name : String
+    { name : String
+    , steps : List Step
     }
 
 
@@ -55,28 +62,116 @@ type alias Step =
     }
 
 
+type alias NewChecklistParameters =
+    { name : String
+    , editingName : Maybe String
+    , steps : List Step
+    , editingStep : Maybe Step
+    }
+
+
 type Msg
     = MoveToNext
     | Select Checklist
+    | CreateChecklist
+    | UpdateChecklist CreateMsg
+    | SaveChecklist
+    | DiscardChecklist
+
+
+type CreateMsg
+    = UpdateTitle String
+    | SaveTitle
+    | UpdateStep String
+    | SaveStep
 
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
         MoveToNext ->
-            case model.selectedChecklist of
+            case model.mode of
                 Nothing ->
                     model
 
-                Just checklist ->
-                    if checklist.currentStep < List.length checklist.checklist.steps then
-                        { model | selectedChecklist = Just <| ChecklistRun checklist.checklist (checklist.currentStep + 1) }
+                Just mode ->
+                    case mode of
+                        Run checklist ->
+                            if checklist.currentStep < List.length checklist.checklist.steps then
+                                { model | mode = Just <| Run <| ChecklistRun checklist.checklist (checklist.currentStep + 1) }
 
-                    else
-                        model
+                            else
+                                model
+
+                        _ ->
+                            model
 
         Select selectedChecklist ->
-            { model | selectedChecklist = Just <| ChecklistRun selectedChecklist 0 }
+            { model | mode = Just <| Run <| ChecklistRun selectedChecklist 0 }
+
+        CreateChecklist ->
+            { model | mode = Just <| Create <| NewChecklistParameters "" (Just "") [] Nothing }
+
+        UpdateChecklist createMsg ->
+            case model.mode of
+                Nothing ->
+                    model
+
+                Just mode ->
+                    case mode of
+                        Create parameters ->
+                            { model | mode = Just <| Create <| updateCreate createMsg parameters }
+
+                        _ ->
+                            model
+
+        SaveChecklist ->
+            case model.mode of
+                Nothing ->
+                    model
+
+                Just mode ->
+                    case mode of
+                        Create parameters ->
+                            { model
+                                | mode = Nothing
+                                , checklists = List.append model.checklists [ Checklist parameters.name parameters.steps ]
+                            }
+
+                        _ ->
+                            model
+
+        DiscardChecklist ->
+            { model | mode = Nothing }
+
+
+updateCreate : CreateMsg -> NewChecklistParameters -> NewChecklistParameters
+updateCreate msg model =
+    case msg of
+        UpdateTitle newTitle ->
+            { model | editingName = Just newTitle }
+
+        SaveTitle ->
+            case model.editingName of
+                Nothing ->
+                    model
+
+                Just editingName ->
+                    { model | name = editingName, editingName = Nothing }
+
+        UpdateStep name ->
+            { model | editingStep = Just <| Step name }
+
+        SaveStep ->
+            case model.editingStep of
+                Nothing ->
+                    model
+
+                Just editingStep ->
+                    { model
+                        | steps = List.append model.steps [ editingStep ]
+                        , editingStep = Nothing
+                    }
 
 
 view : Model -> Html Msg
@@ -93,7 +188,6 @@ view model =
         , ul
             [ class "list-disc list-inside" ]
             [ li [] [ text "reactive style" ]
-            , li [] [ text "create checklist" ]
             , li [] [ text "re-run checklist and track run timestamps" ]
             ]
         ]
@@ -107,14 +201,85 @@ view model =
 
 viewModel : Model -> Html Msg
 viewModel model =
-    case model.selectedChecklist of
+    case model.mode of
         Nothing ->
             div []
-                [ ul [] (List.map viewChecklistEntry model.checklists)
+                [ button
+                    [ onClick CreateChecklist ]
+                    [ text "❇️ Add Checklist" ]
+                , viewChecklistList model.checklists
                 ]
 
-        Just checklistRun ->
-            viewChecklistRun checklistRun
+        Just mode ->
+            case mode of
+                Run checklistRun ->
+                    viewChecklistRun checklistRun
+
+                Create parameters ->
+                    viewChecklistParameters parameters
+
+
+viewChecklistParameters : NewChecklistParameters -> Html Msg
+viewChecklistParameters parameters =
+    case parameters.editingName of
+        Just name ->
+            viewChecklistParametersEmpty name
+
+        Nothing ->
+            let
+                value_ =
+                    case parameters.editingStep of
+                        Nothing ->
+                            ""
+
+                        Just step ->
+                            step.name
+            in
+            div
+                []
+                [ div [] [ text parameters.name ]
+                , div []
+                    [ ul [] (List.map (\s -> li [] [ text s.name ]) parameters.steps)
+                    ]
+                , div
+                    []
+                    [ input
+                        [ type_ "text"
+                        , placeholder "Next step"
+                        , autofocus True -- this doesn't seem to work, but only the very first time the node renders (i.e. the first step)
+                        , value value_
+                        , onInput (\i -> UpdateChecklist <| UpdateStep i)
+                        , onEnter (UpdateChecklist SaveStep)
+                        ]
+                        []
+                    ]
+                , div [] [ button [ onClick SaveChecklist ] [ text "Save" ] ]
+                , div [] [ button [ onClick DiscardChecklist ] [ text "Cancel" ] ]
+                ]
+
+
+viewChecklistParametersEmpty : String -> Html Msg
+viewChecklistParametersEmpty titleValue =
+    div
+        []
+        [ label [] [ text "What's the name of your checklist?" ]
+        , input
+            [ type_ "text"
+            , placeholder "My awesome checklist"
+            , autofocus True
+            , value titleValue
+            , onInput (\i -> UpdateChecklist <| UpdateTitle i)
+            , onEnter (UpdateChecklist SaveTitle)
+            ]
+            []
+        ]
+
+
+viewChecklistList : List Checklist -> Html Msg
+viewChecklistList checklists =
+    div []
+        [ ul [] (List.map viewChecklistEntry checklists)
+        ]
 
 
 viewChecklistEntry : Checklist -> Html Msg
@@ -197,3 +362,16 @@ makeViewModel step index currentIndex =
 
     else
         { text = step.name, completed = False, active = False }
+
+
+onEnter : Msg -> Attribute Msg
+onEnter msg =
+    let
+        isEnter code =
+            if code == 13 then
+                Json.succeed msg
+
+            else
+                Json.fail "not ENTER"
+    in
+    on "keydown" (Json.andThen isEnter keyCode)
