@@ -73,7 +73,7 @@ type alias NewChecklistParameters =
 type Msg
     = MoveToNext
     | Select Checklist
-    | CreateChecklist CreateMsg
+    | UpdateChecklist CreateMsg
     | SaveChecklist
     | DiscardChecklist
 
@@ -108,7 +108,7 @@ update msg model =
         Select selectedChecklist ->
             { model | mode = Just <| Run <| ChecklistRun selectedChecklist 0 }
 
-        CreateChecklist createMsg ->
+        UpdateChecklist createMsg ->
             case model.mode of
                 Nothing ->
                     model
@@ -240,8 +240,8 @@ viewChecklistParameters parameters =
                         , placeholder "Next step"
                         , autofocus True -- this doesn't seem to work, but only the very first time the node renders (i.e. the first step)
                         , value value_
-                        , onInput (\i -> CreateChecklist <| UpdateStep i)
-                        , onEnter (CreateChecklist SaveStep)
+                        , onInput (\i -> UpdateChecklist <| UpdateStep i)
+                        , onEnter (UpdateChecklist SaveStep)
                         ]
                         []
                     ]
@@ -260,8 +260,8 @@ viewChecklistParametersEmpty titleValue =
             , placeholder "My awesome checklist"
             , autofocus True
             , value titleValue
-            , onInput (\i -> CreateChecklist <| UpdateTitle i)
-            , onEnter (CreateChecklist SaveTitle)
+            , onInput (\i -> UpdateChecklist <| UpdateTitle i)
+            , onEnter (UpdateChecklist SaveTitle)
             ]
             []
         ]
