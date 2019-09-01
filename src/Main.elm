@@ -73,6 +73,7 @@ type alias NewChecklistParameters =
 type Msg
     = MoveToNext
     | Select Checklist
+    | CreateChecklist
     | UpdateChecklist CreateMsg
     | SaveChecklist
     | DiscardChecklist
@@ -107,6 +108,9 @@ update msg model =
 
         Select selectedChecklist ->
             { model | mode = Just <| Run <| ChecklistRun selectedChecklist 0 }
+
+        CreateChecklist ->
+            { model | mode = Just <| Create <| NewChecklistParameters "" (Just "") [] Nothing }
 
         UpdateChecklist createMsg ->
             case model.mode of
@@ -200,7 +204,12 @@ viewModel : Model -> Html Msg
 viewModel model =
     case model.mode of
         Nothing ->
-            viewChecklistList model.checklists
+            div []
+                [ button
+                    [ onClick CreateChecklist ]
+                    [ text "❇️ Add Checklist" ]
+                , viewChecklistList model.checklists
+                ]
 
         Just mode ->
             case mode of
