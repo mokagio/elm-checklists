@@ -135,6 +135,20 @@ updateCreate msg model =
                 Just editingName ->
                     { model | name = editingName, editingName = Nothing }
 
+        UpdateStep name ->
+            { model | editingStep = Just <| Step name }
+
+        SaveStep ->
+            case model.editingStep of
+                Nothing ->
+                    model
+
+                Just editingStep ->
+                    { model
+                        | steps = List.append model.steps [ editingStep ]
+                        , editingStep = Nothing
+                    }
+
         _ ->
             model
 
@@ -187,6 +201,15 @@ viewChecklistParameters parameters =
             viewChecklistParametersEmpty name
 
         Nothing ->
+            let
+                value_ =
+                    case parameters.editingStep of
+                        Nothing ->
+                            ""
+
+                        Just step ->
+                            step.name
+            in
             div
                 []
                 [ div [] [ text parameters.name ]
@@ -198,7 +221,10 @@ viewChecklistParameters parameters =
                     [ input
                         [ type_ "text"
                         , placeholder "Next step"
-                        , autofocus True
+                        , autofocus True -- this doesn't seem to work, but only the very first time the node renders (i.e. the first step)
+                        , value value_
+                        , onInput (\i -> CreateChecklist <| UpdateStep i)
+                        , onEnter (CreateChecklist SaveStep)
                         ]
                         []
                     ]
