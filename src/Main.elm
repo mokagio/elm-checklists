@@ -74,6 +74,7 @@ type Msg
     = MoveToNext
     | Select Checklist
     | CreateChecklist CreateMsg
+    | SaveChecklist
 
 
 type CreateMsg
@@ -81,7 +82,6 @@ type CreateMsg
     | SaveTitle
     | UpdateStep String
     | SaveStep
-    | Done
 
 
 update : Msg -> Model -> Model
@@ -120,6 +120,22 @@ update msg model =
                         _ ->
                             model
 
+        SaveChecklist ->
+            case model.mode of
+                Nothing ->
+                    model
+
+                Just mode ->
+                    case mode of
+                        Create parameters ->
+                            { model
+                                | mode = Nothing
+                                , checklists = List.append model.checklists [ Checklist parameters.name parameters.steps ]
+                            }
+
+                        _ ->
+                            model
+
 
 updateCreate : CreateMsg -> NewChecklistParameters -> NewChecklistParameters
 updateCreate msg model =
@@ -148,9 +164,6 @@ updateCreate msg model =
                         | steps = List.append model.steps [ editingStep ]
                         , editingStep = Nothing
                     }
-
-        _ ->
-            model
 
 
 view : Model -> Html Msg
@@ -228,6 +241,7 @@ viewChecklistParameters parameters =
                         ]
                         []
                     ]
+                , button [ onClick SaveChecklist ] [ text "Done" ]
                 ]
 
 
