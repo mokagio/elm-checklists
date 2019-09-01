@@ -39,8 +39,8 @@ init : Model
 init =
     { mode = Nothing
     , checklists =
-        [ Checklist [ Step "first", Step "second", Step "third" ] "numbered"
-        , Checklist [ Step "some", Step "some more" ] "some and then some more"
+        [ Checklist "numbered" [ Step "first", Step "second", Step "third" ]
+        , Checklist "some and then some more" [ Step "some", Step "some more" ]
         ]
     }
 
@@ -52,8 +52,8 @@ type alias ChecklistRun =
 
 
 type alias Checklist =
-    { steps : List Step
-    , name : String
+    { name : String
+    , steps : List Step
     }
 
 
