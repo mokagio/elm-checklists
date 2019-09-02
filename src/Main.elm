@@ -187,8 +187,7 @@ view model =
             [ h3 [ class "text-xl" ] [ text "Next steps:" ] ]
         , ul
             [ class "list-disc list-inside" ]
-            [ li [] [ text "reactive style" ]
-            , li [] [ text "re-run checklist and track run timestamps" ]
+            [ li [] [ text "re-run checklist and track run timestamps" ]
             ]
         ]
 
