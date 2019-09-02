@@ -4,7 +4,3 @@
 elm-stuff
 # elm-repl generated files
 repl-temp-*
-
-# ignore index.html because it's built based on the .elm source
-# this hsould not happen on the gh-pages branch though, where we need the file
-index.html
