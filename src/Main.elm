@@ -181,7 +181,7 @@ view model =
         , p
             [ class "italic" ]
             [ text "Nothing of what you see is persisted ;)" ]
-        , div [ class "py-4" ] [ viewModel model ]
+        , div [ class "mt-4" ] [ viewModel model ]
         , div
             [ class "pt-4 pb-2" ]
             [ h3 [ class "text-xl" ] [ text "Next steps:" ] ]
@@ -234,10 +234,17 @@ viewChecklistParameters parameters =
 
                         Just step ->
                             step.name
+
+                placeholder_ =
+                    if List.isEmpty parameters.steps then
+                        "First step"
+
+                    else
+                        "Next step"
             in
             div
                 []
-                [ div [] [ text parameters.name ]
+                [ div [ class "text-lg font-medium" ] [ text parameters.name ]
                 , div []
                     [ ul [] (List.map (\s -> li [] [ text s.name ]) parameters.steps)
                     ]
@@ -245,7 +252,8 @@ viewChecklistParameters parameters =
                     []
                     [ input
                         [ type_ "text"
-                        , placeholder "Next step"
+                        , class "mt-2 px-1 py-2 italic border w-full"
+                        , placeholder placeholder_
 
                         -- autofocus doesn't work on the first render (i.e.
                         -- first new step), but when this node is re-rendered
@@ -258,8 +266,21 @@ viewChecklistParameters parameters =
                         ]
                         []
                     ]
-                , div [] [ button [ onClick SaveChecklist ] [ text "Save" ] ]
-                , div [] [ button [ onClick DiscardChecklist ] [ text "Cancel" ] ]
+                , div
+                    [ class "italic text-sm w-full text-right text-gray-500" ]
+                    [ text "Press Enter to add" ]
+                , div [ class "text-right w-full mt-2" ]
+                    [ button
+                        [ class "py-2 px-4 border rounded mr-1"
+                        , onClick DiscardChecklist
+                        ]
+                        [ text "Cancel" ]
+                    , button
+                        [ class "bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                        , onClick SaveChecklist
+                        ]
+                        [ text "Save" ]
+                    ]
                 ]
 
 
@@ -270,6 +291,7 @@ viewChecklistParametersEmpty titleValue =
         [ label [] [ text "What's the name of your checklist?" ]
         , input
             [ type_ "text"
+            , class "mt-2 px-1 py-2 italic border w-full"
             , placeholder "My awesome checklist"
             , autofocus True
             , value titleValue
