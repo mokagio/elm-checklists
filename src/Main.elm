@@ -98,7 +98,7 @@ update msg model =
                     case mode of
                         Run checklist ->
                             if checklist.currentStep < List.length checklist.checklist.steps then
-                                { model | mode = Just <| Run <| ChecklistRun checklist.checklist (checklist.currentStep + 1) }
+                                { model | mode = Just <| Run <| { checklist | currentStep = checklist.currentStep + 1 } }
 
                             else
                                 model
