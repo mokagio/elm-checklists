@@ -14,7 +14,7 @@ Using these as reference:
 import Browser
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (keyCode, on, onClick, onInput)
+import Html.Events exposing (keyCode, on, onCheck, onClick, onInput)
 import Json.Decode as Json
 import Task
 
@@ -359,6 +359,7 @@ viewStep viewData =
             , checked viewData.completed
             , disabled <| not viewData.active
             , id viewData.text
+            , onCheck (\_ -> MoveToNext)
             ]
             []
 
@@ -366,7 +367,7 @@ viewStep viewData =
         -- manages to have the checkbox checked? should that be a
         -- MoveToPrevious?
         , label
-            [ for viewData.text, onClick MoveToNext ]
+            [ for viewData.text ]
             [ text viewData.text ]
         ]
 
