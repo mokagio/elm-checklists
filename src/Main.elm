@@ -17,6 +17,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (keyCode, on, onCheck, onClick, onInput)
 import Json.Decode as Json
 import Task
+import Time
 
 
 main : Program () Model Msg
@@ -48,6 +49,7 @@ init =
 type alias ChecklistRun =
     { checklist : Checklist
     , currentStep : Int
+    , completed : Maybe Time.Posix
     }
 
 
@@ -107,7 +109,7 @@ update msg model =
                             model
 
         Select selectedChecklist ->
-            { model | mode = Just <| Run <| ChecklistRun selectedChecklist 0 }
+            { model | mode = Just <| Run <| ChecklistRun selectedChecklist 0 Nothing }
 
         CreateChecklist ->
             { model | mode = Just <| Create <| NewChecklistParameters "" (Just "") [] Nothing }
