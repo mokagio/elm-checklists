@@ -22,7 +22,12 @@ import Time
 
 main : Program () Model Msg
 main =
-    Browser.sandbox { init = init, update = update, view = view }
+    Browser.element
+        { init = \_ -> ( init, Cmd.none )
+        , subscriptions = \_ -> Sub.none
+        , update = update
+        , view = view
+        }
 
 
 type alias Model =
@@ -88,63 +93,73 @@ type CreateMsg
     | SaveStep
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         MoveToNext ->
             case model.mode of
                 Nothing ->
-                    model
+                    ( model, Cmd.none )
 
                 Just mode ->
                     case mode of
                         Run checklist ->
                             if checklist.currentStep < List.length checklist.checklist.steps then
-                                { model | mode = Just <| Run <| { checklist | currentStep = checklist.currentStep + 1 } }
+                                ( { model | mode = Just <| Run <| { checklist | currentStep = checklist.currentStep + 1 } }
+                                , Cmd.none
+                                )
 
                             else
-                                model
+                                ( model, Cmd.none )
 
                         _ ->
-                            model
+                            ( model, Cmd.none )
 
         Select selectedChecklist ->
-            { model | mode = Just <| Run <| ChecklistRun selectedChecklist 0 Nothing }
+            ( { model | mode = Just <| Run <| ChecklistRun selectedChecklist 0 Nothing }
+            , Cmd.none
+            )
 
         CreateChecklist ->
-            { model | mode = Just <| Create <| NewChecklistParameters "" (Just "") [] Nothing }
+            ( { model | mode = Just <| Create <| NewChecklistParameters "" (Just "") [] Nothing }
+            , Cmd.none
+            )
 
         UpdateChecklist createMsg ->
             case model.mode of
                 Nothing ->
-                    model
+                    ( model, Cmd.none )
 
                 Just mode ->
                     case mode of
                         Create parameters ->
-                            { model | mode = Just <| Create <| updateCreate createMsg parameters }
+                            ( { model | mode = Just <| Create <| updateCreate createMsg parameters }
+                            , Cmd.none
+                            )
 
                         _ ->
-                            model
+                            ( model, Cmd.none )
 
         SaveChecklist ->
             case model.mode of
                 Nothing ->
-                    model
+                    ( model, Cmd.none )
 
                 Just mode ->
                     case mode of
                         Create parameters ->
-                            { model
+                            ( { model
                                 | mode = Nothing
                                 , checklists = List.append model.checklists [ Checklist parameters.name parameters.steps ]
-                            }
+                              }
+                            , Cmd.none
+                            )
 
                         _ ->
-                            model
+                            ( model, Cmd.none )
 
         DiscardChecklist ->
-            { model | mode = Nothing }
+            ( { model | mode = Nothing }, Cmd.none )
 
 
 updateCreate : CreateMsg -> NewChecklistParameters -> NewChecklistParameters
