@@ -79,6 +79,7 @@ type alias NewChecklistParameters =
 
 type Msg
     = MoveToNext
+    | ActuallyMoveToNext Time.Posix
     | Select Checklist
     | CreateChecklist
     | UpdateChecklist CreateMsg
@@ -97,6 +98,9 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         MoveToNext ->
+            ( model, Task.perform ActuallyMoveToNext Time.now )
+
+        ActuallyMoveToNext time ->
             case model.mode of
                 Nothing ->
                     ( model, Cmd.none )
@@ -104,10 +108,25 @@ update msg model =
                 Just mode ->
                     case mode of
                         Run checklist ->
-                            if checklist.currentStep < List.length checklist.checklist.steps then
-                                ( { model | mode = Just <| Run <| { checklist | currentStep = checklist.currentStep + 1 } }
-                                , Cmd.none
-                                )
+                            let
+                                stepsLength =
+                                    List.length checklist.checklist.steps
+                            in
+                            if checklist.currentStep < stepsLength then
+                                let
+                                    nextStep =
+                                        checklist.currentStep + 1
+                                in
+                                if nextStep == stepsLength then
+                                    --- don't know how to get the time...
+                                    ( { model | mode = Just <| Run <| { checklist | completed = Just <| time, currentStep = nextStep } }
+                                    , Cmd.none
+                                    )
+
+                                else
+                                    ( { model | mode = Just <| Run <| { checklist | currentStep = nextStep } }
+                                    , Cmd.none
+                                    )
 
                             else
                                 ( model, Cmd.none )
@@ -350,12 +369,32 @@ viewChecklistRun checklistRun =
         [ div [] (List.map viewStep stepsViewData)
         , div [ class "pt-2" ]
             (if isCompleted checklistRun then
-                [ text "all done ✅" ]
+                [ viewCompletedRun checklistRun ]
 
              else
                 []
             )
         ]
+
+
+viewCompletedRun : ChecklistRun -> Html msg
+viewCompletedRun checklistRun =
+    case checklistRun.completed of
+        Nothing ->
+            text "Ooops"
+
+        Just time ->
+            let
+                hour =
+                    String.fromInt (Time.toHour Time.utc time)
+
+                minute =
+                    String.fromInt (Time.toMinute Time.utc time)
+
+                second =
+                    String.fromInt (Time.toSecond Time.utc time)
+            in
+            text <| "all done ✅ by you at " ++ hour ++ ":" ++ minute ++ ":" ++ second ++ " UTC"
 
 
 type alias ChecklistStepViewData =
