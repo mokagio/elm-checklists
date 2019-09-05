@@ -31,7 +31,7 @@ main =
 
 
 type alias Model =
-    { mode : Maybe Mode
+    { mode : Mode
     , checklists : List Checklist
     }
 
@@ -44,7 +44,7 @@ type Mode
 
 init : Model
 init =
-    { mode = Just <| Browse Nothing
+    { mode = Browse Nothing
     , checklists =
         [ Checklist "numbered" [ Step "first", Step "second", Step "third" ]
         , Checklist "some and then some more" [ Step "some", Step "some more" ]
@@ -104,88 +104,73 @@ update msg model =
 
         ActuallyMoveToNext time ->
             case model.mode of
-                Nothing ->
+                Run checklist ->
+                    let
+                        stepsLength =
+                            List.length checklist.checklist.steps
+                    in
+                    if checklist.currentStep < stepsLength then
+                        let
+                            nextStep =
+                                checklist.currentStep + 1
+                        in
+                        if nextStep == stepsLength then
+                            --- don't know how to get the time...
+                            ( { model | mode = Run <| { checklist | completed = Just <| time, currentStep = nextStep } }
+                            , Cmd.none
+                            )
+
+                        else
+                            ( { model | mode = Run <| { checklist | currentStep = nextStep } }
+                            , Cmd.none
+                            )
+
+                    else
+                        ( model, Cmd.none )
+
+                _ ->
                     ( model, Cmd.none )
 
-                Just mode ->
-                    case mode of
-                        Run checklist ->
-                            let
-                                stepsLength =
-                                    List.length checklist.checklist.steps
-                            in
-                            if checklist.currentStep < stepsLength then
-                                let
-                                    nextStep =
-                                        checklist.currentStep + 1
-                                in
-                                if nextStep == stepsLength then
-                                    --- don't know how to get the time...
-                                    ( { model | mode = Just <| Run <| { checklist | completed = Just <| time, currentStep = nextStep } }
-                                    , Cmd.none
-                                    )
-
-                                else
-                                    ( { model | mode = Just <| Run <| { checklist | currentStep = nextStep } }
-                                    , Cmd.none
-                                    )
-
-                            else
-                                ( model, Cmd.none )
-
-                        _ ->
-                            ( model, Cmd.none )
-
         Select selectedChecklist ->
-            ( { model | mode = Just <| Run <| ChecklistRun selectedChecklist 0 Nothing }
+            ( { model | mode = Run <| ChecklistRun selectedChecklist 0 Nothing }
             , Cmd.none
             )
 
         Discard ->
-            ( { model | mode = Nothing }
+            ( { model | mode = Browse Nothing }
             , Cmd.none
             )
 
         CreateChecklist ->
-            ( { model | mode = Just <| Create <| NewChecklistParameters "" (Just "") [] Nothing }
+            ( { model | mode = Create <| NewChecklistParameters "" (Just "") [] Nothing }
             , Cmd.none
             )
 
         UpdateChecklist createMsg ->
             case model.mode of
-                Nothing ->
+                Create parameters ->
+                    ( { model | mode = Create <| updateCreate createMsg parameters }
+                    , Cmd.none
+                    )
+
+                _ ->
                     ( model, Cmd.none )
-
-                Just mode ->
-                    case mode of
-                        Create parameters ->
-                            ( { model | mode = Just <| Create <| updateCreate createMsg parameters }
-                            , Cmd.none
-                            )
-
-                        _ ->
-                            ( model, Cmd.none )
 
         SaveChecklist ->
             case model.mode of
-                Nothing ->
+                Create parameters ->
+                    ( { model
+                        | mode = Browse Nothing
+                        , checklists = List.append model.checklists [ Checklist parameters.name parameters.steps ]
+                      }
+                    , Cmd.none
+                    )
+
+                _ ->
                     ( model, Cmd.none )
 
-                Just mode ->
-                    case mode of
-                        Create parameters ->
-                            ( { model
-                                | mode = Nothing
-                                , checklists = List.append model.checklists [ Checklist parameters.name parameters.steps ]
-                              }
-                            , Cmd.none
-                            )
-
-                        _ ->
-                            ( model, Cmd.none )
-
         DiscardChecklist ->
-            ( { model | mode = Nothing }, Cmd.none )
+            ( { model | mode = Browse Nothing }, Cmd.none )
 
 
 updateCreate : CreateMsg -> NewChecklistParameters -> NewChecklistParameters
@@ -244,24 +229,19 @@ view model =
 viewModel : Model -> Html Msg
 viewModel model =
     case model.mode of
-        Nothing ->
-            div [] []
+        Run checklistRun ->
+            viewChecklistRun checklistRun
 
-        Just mode ->
-            case mode of
-                Run checklistRun ->
-                    viewChecklistRun checklistRun
+        Create parameters ->
+            viewChecklistParameters parameters
 
-                Create parameters ->
-                    viewChecklistParameters parameters
-
-                _ ->
-                    div []
-                        [ button
-                            [ onClick CreateChecklist ]
-                            [ text "❇️ Add Checklist" ]
-                        , viewChecklistList model.checklists
-                        ]
+        _ ->
+            div []
+                [ button
+                    [ onClick CreateChecklist ]
+                    [ text "❇️ Add Checklist" ]
+                , viewChecklistList model.checklists
+                ]
 
 
 viewChecklistParameters : NewChecklistParameters -> Html Msg
