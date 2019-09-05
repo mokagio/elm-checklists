@@ -79,10 +79,15 @@ type alias NewChecklistParameters =
     }
 
 
+
+-- TODO: It's hard to understand the group to which these Msgs belong to
+
+
 type Msg
     = MoveToNext
     | ActuallyMoveToNext Time.Posix
     | Discard
+    | BackHome
     | Select Checklist
     | CreateChecklist
     | UpdateChecklist CreateMsg
@@ -133,14 +138,42 @@ update msg model =
                     ( model, Cmd.none )
 
         Select selectedChecklist ->
-            ( { model | mode = Run <| ChecklistRun selectedChecklist 0 Nothing }
-            , Cmd.none
-            )
+            let
+                fallbackModel =
+                    ( { model | mode = Run <| ChecklistRun selectedChecklist 0 Nothing }
+                    , Cmd.none
+                    )
+            in
+            case model.mode of
+                Browse maybeChecklistRun ->
+                    case maybeChecklistRun of
+                        Just checklistRun ->
+                            ( { model | mode = Run <| checklistRun }
+                            , Cmd.none
+                            )
+
+                        Nothing ->
+                            fallbackModel
+
+                _ ->
+                    fallbackModel
 
         Discard ->
             ( { model | mode = Browse Nothing }
             , Cmd.none
             )
+
+        BackHome ->
+            case model.mode of
+                Run checklistRun ->
+                    ( { model | mode = Browse <| Just checklistRun }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( { model | mode = Browse Nothing }
+                    , Cmd.none
+                    )
 
         CreateChecklist ->
             ( { model | mode = Create <| NewChecklistParameters "" (Just "") [] Nothing }
@@ -375,12 +408,27 @@ viewChecklistRun checklistRun =
         [ div [] (List.map viewStep stepsViewData)
         , div [ class "pt-2" ]
             (if isCompleted checklistRun then
-                [ viewCompletedRun checklistRun ]
+                [ div [] [ viewCompletedRun checklistRun ]
+                , div [] [ viewBack ]
+                ]
 
              else
-                [ a [ class "underline", onClick Discard ] [ text "Discard" ] ]
+                [ div []
+                    [ div
+                        [ class "inline mr-1" ]
+                        [ viewBack ]
+                    , div
+                        [ class "inline" ]
+                        [ a [ class "underline", onClick Discard ] [ text "Discard" ] ]
+                    ]
+                ]
             )
         ]
+
+
+viewBack : Html Msg
+viewBack =
+    a [ class "underline", onClick BackHome ] [ text "Back" ]
 
 
 viewCompletedRun : ChecklistRun -> Html msg
