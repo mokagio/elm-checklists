@@ -46,8 +46,8 @@ init : Model
 init =
     { mode = Browse Nothing
     , checklists =
-        [ Checklist "numbered" [ Step "first", Step "second", Step "third" ]
-        , Checklist "some and then some more" [ Step "some", Step "some more" ]
+        [ Checklist "numbered" 0 [ Step "first", Step "second", Step "third" ]
+        , Checklist "some and then some more" 1 [ Step "some", Step "some more" ]
         ]
     }
 
@@ -61,6 +61,7 @@ type alias ChecklistRun =
 
 type alias Checklist =
     { name : String
+    , uid : Int
     , steps : List Step
     }
 
@@ -161,7 +162,14 @@ update msg model =
                 Create parameters ->
                     ( { model
                         | mode = Browse Nothing
-                        , checklists = List.append model.checklists [ Checklist parameters.name parameters.steps ]
+                        , checklists =
+                            List.append
+                                model.checklists
+                                [ Checklist
+                                    parameters.name
+                                    (List.length model.checklists + 1)
+                                    parameters.steps
+                                ]
                       }
                     , Cmd.none
                     )
