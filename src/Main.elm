@@ -390,17 +390,22 @@ viewCompletedRun checklistRun =
             text "Ooops"
 
         Just time ->
-            let
-                hour =
-                    String.fromInt (Time.toHour Time.utc time)
+            text <| "all done ✅ by you at " ++ toHHMMSSString time
 
-                minute =
-                    String.fromInt (Time.toMinute Time.utc time)
 
-                second =
-                    String.fromInt (Time.toSecond Time.utc time)
-            in
-            text <| "all done ✅ by you at " ++ hour ++ ":" ++ minute ++ ":" ++ second ++ " UTC"
+toHHMMSSString : Time.Posix -> String
+toHHMMSSString time =
+    let
+        hour =
+            String.fromInt (Time.toHour Time.utc time)
+
+        minute =
+            String.fromInt (Time.toMinute Time.utc time)
+
+        second =
+            String.fromInt (Time.toSecond Time.utc time)
+    in
+    hour ++ ":" ++ minute ++ ":" ++ second ++ " UTC"
 
 
 type alias ChecklistStepViewData =
