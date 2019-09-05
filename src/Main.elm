@@ -39,11 +39,12 @@ type alias Model =
 type Mode
     = Create NewChecklistParameters
     | Run ChecklistRun
+    | Browse (Maybe ChecklistRun)
 
 
 init : Model
 init =
-    { mode = Nothing
+    { mode = Just <| Browse Nothing
     , checklists =
         [ Checklist "numbered" [ Step "first", Step "second", Step "third" ]
         , Checklist "some and then some more" [ Step "some", Step "some more" ]
@@ -244,12 +245,7 @@ viewModel : Model -> Html Msg
 viewModel model =
     case model.mode of
         Nothing ->
-            div []
-                [ button
-                    [ onClick CreateChecklist ]
-                    [ text "❇️ Add Checklist" ]
-                , viewChecklistList model.checklists
-                ]
+            div [] []
 
         Just mode ->
             case mode of
@@ -258,6 +254,14 @@ viewModel model =
 
                 Create parameters ->
                     viewChecklistParameters parameters
+
+                _ ->
+                    div []
+                        [ button
+                            [ onClick CreateChecklist ]
+                            [ text "❇️ Add Checklist" ]
+                        , viewChecklistList model.checklists
+                        ]
 
 
 viewChecklistParameters : NewChecklistParameters -> Html Msg
