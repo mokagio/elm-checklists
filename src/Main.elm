@@ -305,18 +305,23 @@ viewChecklistParameters parameters =
                     [ class "italic text-sm w-full text-right text-gray-500" ]
                     [ text "Press Enter to add" ]
                 , div [ class "text-right w-full mt-2" ]
-                    [ button
-                        [ class "py-2 px-4 border rounded mr-1"
-                        , onClick DiscardChecklist
-                        ]
-                        [ text "Cancel" ]
+                    [ viewDiscardChecklist
                     , button
-                        [ class "bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                        [ class "bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 ml-1 rounded"
                         , onClick SaveChecklist
                         ]
                         [ text "Save" ]
                     ]
                 ]
+
+
+viewDiscardChecklist : Html Msg
+viewDiscardChecklist =
+    button
+        [ class "py-2 px-4 border rounded"
+        , onClick DiscardChecklist
+        ]
+        [ text "Cancel" ]
 
 
 viewChecklistParametersEmpty : String -> Html Msg
@@ -334,6 +339,9 @@ viewChecklistParametersEmpty titleValue =
             , onEnter (UpdateChecklist SaveTitle)
             ]
             []
+        , div
+            [ class "text-right mt-2" ]
+            [ viewDiscardChecklist ]
         ]
 
 
