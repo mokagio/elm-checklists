@@ -80,6 +80,7 @@ type alias NewChecklistParameters =
 type Msg
     = MoveToNext
     | ActuallyMoveToNext Time.Posix
+    | Discard
     | Select Checklist
     | CreateChecklist
     | UpdateChecklist CreateMsg
@@ -136,6 +137,11 @@ update msg model =
 
         Select selectedChecklist ->
             ( { model | mode = Just <| Run <| ChecklistRun selectedChecklist 0 Nothing }
+            , Cmd.none
+            )
+
+        Discard ->
+            ( { model | mode = Nothing }
             , Cmd.none
             )
 
@@ -380,7 +386,7 @@ viewChecklistRun checklistRun =
                 [ viewCompletedRun checklistRun ]
 
              else
-                []
+                [ a [ class "underline", onClick Discard ] [ text "Discard" ] ]
             )
         ]
 
