@@ -406,21 +406,33 @@ viewChecklistRun checklistRun =
     in
     div []
         [ div [] (List.map viewStep stepsViewData)
-        , div [ class "pt-2" ]
+        , div []
             (if isCompleted checklistRun then
-                [ div [] [ viewCompletedRun checklistRun ]
-                , div [] [ viewBack ]
+                [ div [ class "my-3" ] [ text "All done" ] ]
+
+             else
+                []
+            )
+        , div [ class "mt-4 clearfix" ]
+            (if isCompleted checklistRun then
+                [ button
+                    [ class "float-left py-2 px-4 border rounded"
+                    , onClick BackHome
+                    ]
+                    [ text "Back" ]
                 ]
 
              else
-                [ div []
-                    [ div
-                        [ class "inline mr-1" ]
-                        [ viewBack ]
-                    , div
-                        [ class "inline" ]
-                        [ a [ class "underline", onClick Discard ] [ text "Discard" ] ]
+                [ button
+                    [ class "float-left py-2 px-4 border rounded"
+                    , onClick BackHome
                     ]
+                    [ text "Back" ]
+                , button
+                    [ class "float-left py-2 px-4 border rounded ml-1"
+                    , onClick Discard
+                    ]
+                    [ text "Discard" ]
                 ]
             )
         ]
