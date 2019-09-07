@@ -119,9 +119,11 @@ update msg model =
                         let
                             nextStep =
                                 checklist.currentStep + 1
+
+                            completed =
+                                nextStep == stepsLength
                         in
-                        if nextStep == stepsLength then
-                            --- don't know how to get the time...
+                        if completed then
                             ( { model | mode = Run <| { checklist | completed = Just <| time, currentStep = nextStep } }
                             , Cmd.none
                             )
