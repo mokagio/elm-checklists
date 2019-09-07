@@ -46,8 +46,8 @@ init : Model
 init =
     { mode = Browse Nothing
     , checklists =
-        [ Checklist "numbered" 0 [ Step "first", Step "second", Step "third" ]
-        , Checklist "some and then some more" 1 [ Step "some", Step "some more" ]
+        [ Checklist "numbered" 0 [ Step "first", Step "second", Step "third" ] Nothing
+        , Checklist "some and then some more" 1 [ Step "some", Step "some more" ] Nothing
         ]
     }
 
@@ -55,7 +55,6 @@ init =
 type alias ChecklistRun =
     { checklist : Checklist
     , currentStep : Int
-    , completed : Maybe Time.Posix
     }
 
 
@@ -63,6 +62,7 @@ type alias Checklist =
     { name : String
     , uid : Int
     , steps : List Step
+    , lastCompleted : Maybe Time.Posix
     }
 
 
@@ -124,7 +124,19 @@ update msg model =
                                 nextStep == stepsLength
                         in
                         if completed then
-                            ( { model | mode = Run <| { checklist | completed = Just <| time, currentStep = nextStep } }
+                            let
+                                updatedChecklists : Checklist -> Checklist
+                                updatedChecklists c =
+                                    if c.uid == checklist.checklist.uid then
+                                        { c | lastCompleted = Just <| time }
+
+                                    else
+                                        c
+                            in
+                            ( { model
+                                | mode = Run <| { checklist | currentStep = nextStep }
+                                , checklists = List.map updatedChecklists model.checklists
+                              }
                             , Cmd.none
                             )
 
@@ -142,7 +154,7 @@ update msg model =
         Select selectedChecklist ->
             let
                 fallbackModel =
-                    ( { model | mode = Run <| ChecklistRun selectedChecklist 0 Nothing }
+                    ( { model | mode = Run <| ChecklistRun selectedChecklist 0 }
                     , Cmd.none
                     )
             in
@@ -150,9 +162,16 @@ update msg model =
                 Browse maybeChecklistRun ->
                     case maybeChecklistRun of
                         Just checklistRun ->
-                            ( { model | mode = Run <| checklistRun }
-                            , Cmd.none
-                            )
+                            if isCompleted checklistRun then
+                                fallbackModel
+
+                            else if checklistRun.checklist.uid /= selectedChecklist.uid then
+                                fallbackModel
+
+                            else
+                                ( { model | mode = Run <| checklistRun }
+                                , Cmd.none
+                                )
 
                         Nothing ->
                             fallbackModel
@@ -204,6 +223,7 @@ update msg model =
                                     parameters.name
                                     (List.length model.checklists + 1)
                                     parameters.steps
+                                    Nothing
                                 ]
                       }
                     , Cmd.none
