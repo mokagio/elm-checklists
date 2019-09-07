@@ -445,16 +445,6 @@ viewBack =
     a [ class "underline", onClick BackHome ] [ text "Back" ]
 
 
-viewCompletedRun : ChecklistRun -> Html msg
-viewCompletedRun checklistRun =
-    case checklistRun.completed of
-        Nothing ->
-            text "Ooops"
-
-        Just time ->
-            text <| "all done ✅ by you at " ++ toHHMMSSString time
-
-
 toHHMMSSString : Time.Posix -> String
 toHHMMSSString time =
     let
