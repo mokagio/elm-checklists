@@ -285,13 +285,6 @@ view model =
             [ class "italic" ]
             [ text "Nothing of what you see is persisted ;)" ]
         , div [ class "mt-4" ] [ viewModel model ]
-        , div
-            [ class "pt-4 pb-2" ]
-            [ h3 [ class "text-xl" ] [ text "Next steps:" ] ]
-        , ul
-            [ class "list-disc list-inside" ]
-            [ li [] [ text "re-run checklist and track run timestamps" ]
-            ]
         ]
 
 
