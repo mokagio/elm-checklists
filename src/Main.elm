@@ -279,37 +279,24 @@ updateCreate msg model =
 
 view : Model -> Html Msg
 view model =
-    div [ class "container mx-auto py-8 px-6" ]
-        [ h1 [ class "text-3xl pb-2" ] [ text "Checklists Demo" ]
-        , p
-            [ class "italic" ]
-            [ text "Nothing of what you see is persisted ;)" ]
-        , div [ class "mt-4" ] [ viewModel model ]
-        ]
+    div
+        [ class "mt-4" ]
+        (case model.mode of
+            Run checklistRun ->
+                [ viewChecklistRun checklistRun ]
 
+            Create parameters ->
+                [ viewChecklistParameters parameters ]
 
-
--- TODO: I don't like the name viewModel because it carries over too much
--- meaning in other contexts, I hope as the type system evolves I'll be able to
--- have clearer names here.
-
-
-viewModel : Model -> Html Msg
-viewModel model =
-    case model.mode of
-        Run checklistRun ->
-            viewChecklistRun checklistRun
-
-        Create parameters ->
-            viewChecklistParameters parameters
-
-        Browse ->
-            div []
-                [ button
-                    [ onClick CreateChecklist ]
-                    [ text "❇️ Add Checklist" ]
-                , viewChecklistList model.checklists model.inProgressList
+            Browse ->
+                [ div []
+                    [ button
+                        [ onClick CreateChecklist ]
+                        [ text "❇️ Add Checklist" ]
+                    , viewChecklistList model.checklists model.inProgressList
+                    ]
                 ]
+        )
 
 
 viewChecklistParameters : NewChecklistParameters -> Html Msg
