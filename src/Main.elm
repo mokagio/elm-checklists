@@ -303,10 +303,17 @@ view model =
 
             Browse ->
                 [ div []
-                    [ button
-                        [ onClick CreateChecklist ]
-                        [ text "❇️ Add Checklist" ]
-                    , viewChecklistList model.checklists model.inProgressList
+                    [ div
+                        [ class "float clearfix mb-2" ]
+                        [ button
+                            [ class "float float-right py-2 px-4 border rounded"
+                            , onClick CreateChecklist
+                            ]
+                            [ text "Add Checklist" ]
+                        ]
+                    ]
+                , div []
+                    [ viewChecklistList model.checklists model.inProgressList
                     ]
                 ]
         )
@@ -434,10 +441,10 @@ viewChecklistEntry checklist inProgress =
                         "never run"
     in
     li
-        []
+        [ class "border rounded pl-2 p-3 mb-2" ]
         [ a
             [ href "#", onClick <| Select checklist ]
-            [ span [] [ text <| "👉 " ++ checklist.name ]
+            [ span [] [ text checklist.name ]
             , span [ class "text-gray-500 italic" ] [ text <| " " ++ timeString ]
             ]
         ]
