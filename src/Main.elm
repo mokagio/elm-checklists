@@ -298,12 +298,12 @@ viewModel model =
         Create parameters ->
             viewChecklistParameters parameters
 
-        _ ->
+        Browse inProgressChecklistRun ->
             div []
                 [ button
                     [ onClick CreateChecklist ]
                     [ text "❇️ Add Checklist" ]
-                , viewChecklistList model.checklists
+                , viewChecklistList model.checklists inProgressChecklistRun
                 ]
 
 
@@ -398,23 +398,40 @@ viewChecklistParametersEmpty titleValue =
         ]
 
 
-viewChecklistList : List Checklist -> Html Msg
-viewChecklistList checklists =
+viewChecklistList : List Checklist -> Maybe ChecklistRun -> Html Msg
+viewChecklistList checklists inProgressChecklistRun =
+    let
+        viewChecklistEntry_ checklist =
+            case inProgressChecklistRun of
+                Nothing ->
+                    viewChecklistEntry checklist False
+
+                Just checklistRun ->
+                    if checklistRun.checklist.uid == checklist.uid then
+                        viewChecklistEntry checklist True
+
+                    else
+                        viewChecklistEntry checklist False
+    in
     div []
-        [ ul [] (List.map viewChecklistEntry checklists)
+        [ ul [] (List.map viewChecklistEntry_ checklists)
         ]
 
 
-viewChecklistEntry : Checklist -> Html Msg
-viewChecklistEntry checklist =
+viewChecklistEntry : Checklist -> Bool -> Html Msg
+viewChecklistEntry checklist inProgress =
     let
         timeString =
-            case checklist.lastCompleted of
-                Just completed ->
-                    "last completed at " ++ toHHMMSSString completed
+            if inProgress then
+                "in progress"
 
-                Nothing ->
-                    "never run"
+            else
+                case checklist.lastCompleted of
+                    Just completed ->
+                        "last completed at " ++ toHHMMSSString completed
+
+                    Nothing ->
+                        "never run"
     in
     li
         []
