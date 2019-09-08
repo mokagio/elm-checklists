@@ -33,22 +33,24 @@ main =
 type alias Model =
     { mode : Mode
     , checklists : List Checklist
+    , inProgressList : List ChecklistRun
     }
 
 
 type Mode
     = Create NewChecklistParameters
     | Run ChecklistRun
-    | Browse (Maybe ChecklistRun)
+    | Browse
 
 
 init : Model
 init =
-    { mode = Browse Nothing
+    { mode = Browse
     , checklists =
         [ Checklist "numbered" 0 [ Step "first", Step "second", Step "third" ] Nothing
         , Checklist "some and then some more" 1 [ Step "some", Step "some more" ] Nothing
         ]
+    , inProgressList = []
     }
 
 
@@ -86,7 +88,7 @@ type alias NewChecklistParameters =
 type Msg
     = MoveToNext
     | ActuallyMoveToNext Time.Posix
-    | Discard
+    | Discard Checklist
     | BackHome
     | Select Checklist
     | CreateChecklist
@@ -122,6 +124,9 @@ update msg model =
 
                             completed =
                                 nextStep == stepsLength
+
+                            updatedChecklistRun =
+                                { checklist | currentStep = nextStep }
                         in
                         if completed then
                             let
@@ -134,14 +139,27 @@ update msg model =
                                         c
                             in
                             ( { model
-                                | mode = Run <| { checklist | currentStep = nextStep }
+                                | mode = Run updatedChecklistRun
                                 , checklists = List.map updatedChecklists model.checklists
+                                , inProgressList = List.filter (\run -> run.checklist.uid /= updatedChecklistRun.checklist.uid) model.inProgressList
                               }
                             , Cmd.none
                             )
 
                         else
-                            ( { model | mode = Run <| { checklist | currentStep = nextStep } }
+                            let
+                                updatedInProgress : ChecklistRun -> ChecklistRun
+                                updatedInProgress run =
+                                    if run.checklist.uid == updatedChecklistRun.checklist.uid then
+                                        updatedChecklistRun
+
+                                    else
+                                        run
+                            in
+                            ( { model
+                                | mode = Run updatedChecklistRun
+                                , inProgressList = List.map updatedInProgress model.inProgressList
+                              }
                             , Cmd.none
                             )
 
@@ -152,47 +170,41 @@ update msg model =
                     ( model, Cmd.none )
 
         Select selectedChecklist ->
-            let
-                fallbackModel =
-                    ( { model | mode = Run <| ChecklistRun selectedChecklist 0 }
+            case List.head <| List.filter (\run -> run.checklist.uid == selectedChecklist.uid) model.inProgressList of
+                Nothing ->
+                    let
+                        newRun =
+                            ChecklistRun selectedChecklist 0
+                    in
+                    ( { model
+                        | mode = Run newRun
+                        , inProgressList = List.append model.inProgressList [ newRun ]
+                      }
                     , Cmd.none
                     )
-            in
-            case model.mode of
-                Browse maybeChecklistRun ->
-                    case maybeChecklistRun of
-                        Just checklistRun ->
-                            if isCompleted checklistRun then
-                                fallbackModel
 
-                            else if checklistRun.checklist.uid /= selectedChecklist.uid then
-                                fallbackModel
+                Just inProgressRun ->
+                    ( { model | mode = Run inProgressRun }
+                    , Cmd.none
+                    )
 
-                            else
-                                ( { model | mode = Run <| checklistRun }
-                                , Cmd.none
-                                )
-
-                        Nothing ->
-                            fallbackModel
-
-                _ ->
-                    fallbackModel
-
-        Discard ->
-            ( { model | mode = Browse Nothing }
+        Discard checklist ->
+            ( { model
+                | mode = Browse
+                , inProgressList = List.filter (\run -> run.checklist.uid /= checklist.uid) model.inProgressList
+              }
             , Cmd.none
             )
 
         BackHome ->
             case model.mode of
                 Run checklistRun ->
-                    ( { model | mode = Browse <| Just checklistRun }
+                    ( { model | mode = Browse }
                     , Cmd.none
                     )
 
                 _ ->
-                    ( { model | mode = Browse Nothing }
+                    ( { model | mode = Browse }
                     , Cmd.none
                     )
 
@@ -215,7 +227,7 @@ update msg model =
             case model.mode of
                 Create parameters ->
                     ( { model
-                        | mode = Browse Nothing
+                        | mode = Browse
                         , checklists =
                             List.append
                                 model.checklists
@@ -233,7 +245,7 @@ update msg model =
                     ( model, Cmd.none )
 
         DiscardChecklist ->
-            ( { model | mode = Browse Nothing }, Cmd.none )
+            ( { model | mode = Browse }, Cmd.none )
 
 
 updateCreate : CreateMsg -> NewChecklistParameters -> NewChecklistParameters
@@ -298,12 +310,12 @@ viewModel model =
         Create parameters ->
             viewChecklistParameters parameters
 
-        Browse inProgressChecklistRun ->
+        Browse ->
             div []
                 [ button
                     [ onClick CreateChecklist ]
                     [ text "❇️ Add Checklist" ]
-                , viewChecklistList model.checklists inProgressChecklistRun
+                , viewChecklistList model.checklists model.inProgressList
                 ]
 
 
@@ -398,20 +410,15 @@ viewChecklistParametersEmpty titleValue =
         ]
 
 
-viewChecklistList : List Checklist -> Maybe ChecklistRun -> Html Msg
-viewChecklistList checklists inProgressChecklistRun =
+viewChecklistList : List Checklist -> List ChecklistRun -> Html Msg
+viewChecklistList checklists inProgressList =
     let
         viewChecklistEntry_ checklist =
-            case inProgressChecklistRun of
-                Nothing ->
-                    viewChecklistEntry checklist False
+            if List.member checklist.uid <| List.map (\run -> run.checklist.uid) inProgressList then
+                viewChecklistEntry checklist True
 
-                Just checklistRun ->
-                    if checklistRun.checklist.uid == checklist.uid then
-                        viewChecklistEntry checklist True
-
-                    else
-                        viewChecklistEntry checklist False
+            else
+                viewChecklistEntry checklist False
     in
     div []
         [ ul [] (List.map viewChecklistEntry_ checklists)
@@ -480,7 +487,7 @@ viewChecklistRun checklistRun =
                     [ text "Back" ]
                 , button
                     [ class "float-left py-2 px-4 border rounded ml-1"
-                    , onClick Discard
+                    , onClick (Discard checklistRun.checklist)
                     ]
                     [ text "Discard" ]
                 ]
