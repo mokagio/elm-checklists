@@ -43,15 +43,20 @@ type Mode
     | Browse
 
 
+swimming : Checklist
+swimming =
+    Checklist
+        "Swimming Pool Packing"
+        0
+        [ Step "Towel", Step "Swim suit", Step "Goggles", Step "Body wash" ]
+        Nothing
+
+
 init : Model
 init =
-    { mode = Browse
+    { mode = Run <| ChecklistRun swimming 1
     , checklists =
-        [ Checklist
-            "Swimming Pool Packing"
-            0
-            [ Step "Towel", Step "Swim suit", Step "Goggles", Step "Body wash" ]
-            Nothing
+        [ swimming
         , Checklist
             "Morning Routine"
             1
@@ -512,24 +517,31 @@ type alias ChecklistStepViewData =
 
 viewStep : ChecklistStepViewData -> Html Msg
 viewStep viewData =
-    div []
+    div [ class "border rounded pl-2 p-3 mb-2" ]
         -- TODO: using viewData.text for the id might result in
         -- inconsistencies if there are multiple steps with the same name
         [ input
             [ type_ "checkbox"
-            , class "mr-2"
             , checked viewData.completed
             , disabled <| not viewData.active
             , id viewData.text
+
+            -- TODO: is it safe to always move to next? what if the user
+            -- somehow manages to have the checkbox checked? should that be a
+            -- MoveToPrevious?
             , onCheck (\_ -> MoveToNext)
             ]
             []
-
-        -- TODO: is it safe to always move to next? what if the user somehow
-        -- manages to have the checkbox checked? should that be a
-        -- MoveToPrevious?
         , label
-            [ for viewData.text ]
+            [ for viewData.text
+            , class
+                (if viewData.completed then
+                    "line-through ml-2 text-gray-500 w-full"
+
+                 else
+                    "ml-2 w-full"
+                )
+            ]
             [ text viewData.text ]
         ]
 
