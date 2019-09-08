@@ -47,8 +47,16 @@ init : Model
 init =
     { mode = Browse
     , checklists =
-        [ Checklist "numbered" 0 [ Step "first", Step "second", Step "third" ] Nothing
-        , Checklist "some and then some more" 1 [ Step "some", Step "some more" ] Nothing
+        [ Checklist
+            "Swimming Pool Packing"
+            0
+            [ Step "Towel", Step "Swim suit", Step "Goggles", Step "Body wash" ]
+            Nothing
+        , Checklist
+            "Morning Routine"
+            1
+            [ Step "Meditate", Step "Brew coffee", Step "Journal", Step "Check emails" ]
+            Nothing
         ]
     , inProgressList = []
     }
