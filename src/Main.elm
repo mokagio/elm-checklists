@@ -407,11 +407,22 @@ viewChecklistList checklists =
 
 viewChecklistEntry : Checklist -> Html Msg
 viewChecklistEntry checklist =
+    let
+        timeString =
+            case checklist.lastCompleted of
+                Just completed ->
+                    "last completed at " ++ toHHMMSSString completed
+
+                Nothing ->
+                    "never run"
+    in
     li
         []
         [ a
             [ href "#", onClick <| Select checklist ]
-            [ text <| "👉 " ++ checklist.name ]
+            [ span [] [ text <| "👉 " ++ checklist.name ]
+            , span [ class "text-gray-500 italic" ] [ text <| " " ++ timeString ]
+            ]
         ]
 
 
