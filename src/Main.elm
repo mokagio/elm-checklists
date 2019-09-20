@@ -43,12 +43,25 @@ type Mode
     | Browse
 
 
+swimming : Checklist
+swimming =
+    Checklist
+        "Swimming Pool Packing"
+        0
+        [ Step "Towel", Step "Swim suit", Step "Goggles", Step "Body wash" ]
+        Nothing
+
+
 init : Model
 init =
-    { mode = Browse
+    { mode = Run <| ChecklistRun swimming 1
     , checklists =
-        [ Checklist "numbered" 0 [ Step "first", Step "second", Step "third" ] Nothing
-        , Checklist "some and then some more" 1 [ Step "some", Step "some more" ] Nothing
+        [ swimming
+        , Checklist
+            "Morning Routine"
+            1
+            [ Step "Meditate", Step "Brew coffee", Step "Journal", Step "Check emails" ]
+            Nothing
         ]
     , inProgressList = []
     }
@@ -279,37 +292,31 @@ updateCreate msg model =
 
 view : Model -> Html Msg
 view model =
-    div [ class "container mx-auto py-8 px-6" ]
-        [ h1 [ class "text-3xl pb-2" ] [ text "Checklists Demo" ]
-        , p
-            [ class "italic" ]
-            [ text "Nothing of what you see is persisted ;)" ]
-        , div [ class "mt-4" ] [ viewModel model ]
-        ]
+    div
+        [ class "mt-4" ]
+        (case model.mode of
+            Run checklistRun ->
+                [ viewChecklistRun checklistRun ]
 
+            Create parameters ->
+                [ viewChecklistParameters parameters ]
 
-
--- TODO: I don't like the name viewModel because it carries over too much
--- meaning in other contexts, I hope as the type system evolves I'll be able to
--- have clearer names here.
-
-
-viewModel : Model -> Html Msg
-viewModel model =
-    case model.mode of
-        Run checklistRun ->
-            viewChecklistRun checklistRun
-
-        Create parameters ->
-            viewChecklistParameters parameters
-
-        Browse ->
-            div []
-                [ button
-                    [ onClick CreateChecklist ]
-                    [ text "❇️ Add Checklist" ]
-                , viewChecklistList model.checklists model.inProgressList
+            Browse ->
+                [ div []
+                    [ div
+                        [ class "float clearfix mb-2" ]
+                        [ button
+                            [ class "float float-right py-2 px-4 border rounded"
+                            , onClick CreateChecklist
+                            ]
+                            [ text "Add Checklist" ]
+                        ]
+                    ]
+                , div []
+                    [ viewChecklistList model.checklists model.inProgressList
+                    ]
                 ]
+        )
 
 
 viewChecklistParameters : NewChecklistParameters -> Html Msg
@@ -434,10 +441,10 @@ viewChecklistEntry checklist inProgress =
                         "never run"
     in
     li
-        []
+        [ class "border rounded pl-2 p-3 mb-2" ]
         [ a
             [ href "#", onClick <| Select checklist ]
-            [ span [] [ text <| "👉 " ++ checklist.name ]
+            [ span [] [ text checklist.name ]
             , span [ class "text-gray-500 italic" ] [ text <| " " ++ timeString ]
             ]
         ]
@@ -466,7 +473,7 @@ viewChecklistRun checklistRun =
         , div [ class "mt-4 clearfix" ]
             (if isCompleted checklistRun then
                 [ button
-                    [ class "float-left py-2 px-4 border rounded"
+                    [ class "float-right py-2 px-4 border rounded"
                     , onClick BackHome
                     ]
                     [ text "Back" ]
@@ -474,12 +481,12 @@ viewChecklistRun checklistRun =
 
              else
                 [ button
-                    [ class "float-left py-2 px-4 border rounded"
+                    [ class "float-right py-2 px-4 border rounded ml-1"
                     , onClick BackHome
                     ]
                     [ text "Back" ]
                 , button
-                    [ class "float-left py-2 px-4 border rounded ml-1"
+                    [ class "float-right py-2 px-4 border rounded"
                     , onClick (Discard checklistRun.checklist)
                     ]
                     [ text "Discard" ]
@@ -517,24 +524,31 @@ type alias ChecklistStepViewData =
 
 viewStep : ChecklistStepViewData -> Html Msg
 viewStep viewData =
-    div []
+    div [ class "border rounded pl-2 p-3 mb-2" ]
         -- TODO: using viewData.text for the id might result in
         -- inconsistencies if there are multiple steps with the same name
         [ input
             [ type_ "checkbox"
-            , class "mr-2"
             , checked viewData.completed
             , disabled <| not viewData.active
             , id viewData.text
+
+            -- TODO: is it safe to always move to next? what if the user
+            -- somehow manages to have the checkbox checked? should that be a
+            -- MoveToPrevious?
             , onCheck (\_ -> MoveToNext)
             ]
             []
-
-        -- TODO: is it safe to always move to next? what if the user somehow
-        -- manages to have the checkbox checked? should that be a
-        -- MoveToPrevious?
         , label
-            [ for viewData.text ]
+            [ for viewData.text
+            , class
+                (if viewData.completed then
+                    "line-through ml-2 text-gray-500 w-full"
+
+                 else
+                    "ml-2 w-full"
+                )
+            ]
             [ text viewData.text ]
         ]
 
