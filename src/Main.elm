@@ -473,7 +473,7 @@ viewChecklistRun checklistRun =
         , div [ class "mt-4 clearfix" ]
             (if isCompleted checklistRun then
                 [ button
-                    [ class "float-left py-2 px-4 border rounded"
+                    [ class "float-right py-2 px-4 border rounded"
                     , onClick BackHome
                     ]
                     [ text "Back" ]
@@ -481,12 +481,12 @@ viewChecklistRun checklistRun =
 
              else
                 [ button
-                    [ class "float-left py-2 px-4 border rounded"
+                    [ class "float-right py-2 px-4 border rounded ml-1"
                     , onClick BackHome
                     ]
                     [ text "Back" ]
                 , button
-                    [ class "float-left py-2 px-4 border rounded ml-1"
+                    [ class "float-right py-2 px-4 border rounded"
                     , onClick (Discard checklistRun.checklist)
                     ]
                     [ text "Discard" ]
