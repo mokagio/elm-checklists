@@ -2314,6 +2314,52 @@ function _Platform_mergeExportsDebug(moduleName, obj, exports)
 
 
 
+function _Time_now(millisToPosix)
+{
+	return _Scheduler_binding(function(callback)
+	{
+		callback(_Scheduler_succeed(millisToPosix(Date.now())));
+	});
+}
+
+var _Time_setInterval = F2(function(interval, task)
+{
+	return _Scheduler_binding(function(callback)
+	{
+		var id = setInterval(function() { _Scheduler_rawSpawn(task); }, interval);
+		return function() { clearInterval(id); };
+	});
+});
+
+function _Time_here()
+{
+	return _Scheduler_binding(function(callback)
+	{
+		callback(_Scheduler_succeed(
+			A2(elm$time$Time$customZone, -(new Date().getTimezoneOffset()), _List_Nil)
+		));
+	});
+}
+
+
+function _Time_getZoneName()
+{
+	return _Scheduler_binding(function(callback)
+	{
+		try
+		{
+			var name = elm$time$Time$Name(Intl.DateTimeFormat().resolvedOptions().timeZone);
+		}
+		catch (e)
+		{
+			var name = elm$time$Time$Offset(new Date().getTimezoneOffset());
+		}
+		callback(_Scheduler_succeed(name));
+	});
+}
+
+
+
 
 // HELPERS
 
@@ -4310,9 +4356,10 @@ function _Browser_load(url)
 		}
 	}));
 }
-var author$project$Main$Checklist = F2(
-	function (name, steps) {
-		return {name: name, steps: steps};
+var author$project$Main$Browse = {$: 'Browse'};
+var author$project$Main$Checklist = F4(
+	function (name, uid, steps, lastCompleted) {
+		return {lastCompleted: lastCompleted, name: name, steps: steps, uid: uid};
 	});
 var author$project$Main$Step = function (name) {
 	return {name: name};
@@ -4398,28 +4445,40 @@ var elm$core$Set$toList = function (_n0) {
 	var dict = _n0.a;
 	return elm$core$Dict$keys(dict);
 };
+var author$project$Main$swimming = A4(
+	author$project$Main$Checklist,
+	'Swimming Pool Packing',
+	0,
+	_List_fromArray(
+		[
+			author$project$Main$Step('Towel'),
+			author$project$Main$Step('Swim suit'),
+			author$project$Main$Step('Goggles'),
+			author$project$Main$Step('Body wash')
+		]),
+	elm$core$Maybe$Nothing);
 var author$project$Main$init = {
 	checklists: _List_fromArray(
 		[
-			A2(
+			author$project$Main$swimming,
+			A4(
 			author$project$Main$Checklist,
-			'numbered',
+			'Morning Routine',
+			1,
 			_List_fromArray(
 				[
-					author$project$Main$Step('first'),
-					author$project$Main$Step('second'),
-					author$project$Main$Step('third')
-				])),
-			A2(
-			author$project$Main$Checklist,
-			'some and then some more',
-			_List_fromArray(
-				[
-					author$project$Main$Step('some'),
-					author$project$Main$Step('some more')
-				]))
+					author$project$Main$Step('Meditate'),
+					author$project$Main$Step('Brew coffee'),
+					author$project$Main$Step('Journal'),
+					author$project$Main$Step('Check emails')
+				]),
+			elm$core$Maybe$Nothing)
 		]),
-	mode: elm$core$Maybe$Nothing
+	inProgressList: _List_Nil,
+	mode: author$project$Main$Browse
+};
+var author$project$Main$ActuallyMoveToNext = function (a) {
+	return {$: 'ActuallyMoveToNext', a: a};
 };
 var author$project$Main$ChecklistRun = F2(
 	function (checklist, currentStep) {
@@ -4576,7 +4635,29 @@ var author$project$Main$updateCreate = F2(
 				}
 		}
 	});
+var elm$core$Basics$eq = _Utils_equal;
 var elm$core$Basics$lt = _Utils_lt;
+var elm$core$Basics$neq = _Utils_notEqual;
+var elm$core$List$filter = F2(
+	function (isGood, list) {
+		return A3(
+			elm$core$List$foldr,
+			F2(
+				function (x, xs) {
+					return isGood(x) ? A2(elm$core$List$cons, x, xs) : xs;
+				}),
+			_List_Nil,
+			list);
+	});
+var elm$core$List$head = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return elm$core$Maybe$Just(x);
+	} else {
+		return elm$core$Maybe$Nothing;
+	}
+};
 var elm$core$List$length = function (xs) {
 	return A3(
 		elm$core$List$foldl,
@@ -4587,110 +4668,20 @@ var elm$core$List$length = function (xs) {
 		0,
 		xs);
 };
-var author$project$Main$update = F2(
-	function (msg, model) {
-		switch (msg.$) {
-			case 'MoveToNext':
-				var _n1 = model.mode;
-				if (_n1.$ === 'Nothing') {
-					return model;
-				} else {
-					var mode = _n1.a;
-					if (mode.$ === 'Run') {
-						var checklist = mode.a;
-						return (_Utils_cmp(
-							checklist.currentStep,
-							elm$core$List$length(checklist.checklist.steps)) < 0) ? _Utils_update(
-							model,
-							{
-								mode: elm$core$Maybe$Just(
-									author$project$Main$Run(
-										A2(author$project$Main$ChecklistRun, checklist.checklist, checklist.currentStep + 1)))
-							}) : model;
-					} else {
-						return model;
-					}
-				}
-			case 'Select':
-				var selectedChecklist = msg.a;
-				return _Utils_update(
-					model,
-					{
-						mode: elm$core$Maybe$Just(
-							author$project$Main$Run(
-								A2(author$project$Main$ChecklistRun, selectedChecklist, 0)))
-					});
-			case 'CreateChecklist':
-				return _Utils_update(
-					model,
-					{
-						mode: elm$core$Maybe$Just(
-							author$project$Main$Create(
-								A4(
-									author$project$Main$NewChecklistParameters,
-									'',
-									elm$core$Maybe$Just(''),
-									_List_Nil,
-									elm$core$Maybe$Nothing)))
-					});
-			case 'UpdateChecklist':
-				var createMsg = msg.a;
-				var _n3 = model.mode;
-				if (_n3.$ === 'Nothing') {
-					return model;
-				} else {
-					var mode = _n3.a;
-					if (mode.$ === 'Create') {
-						var parameters = mode.a;
-						return _Utils_update(
-							model,
-							{
-								mode: elm$core$Maybe$Just(
-									author$project$Main$Create(
-										A2(author$project$Main$updateCreate, createMsg, parameters)))
-							});
-					} else {
-						return model;
-					}
-				}
-			case 'SaveChecklist':
-				var _n5 = model.mode;
-				if (_n5.$ === 'Nothing') {
-					return model;
-				} else {
-					var mode = _n5.a;
-					if (mode.$ === 'Create') {
-						var parameters = mode.a;
-						return _Utils_update(
-							model,
-							{
-								checklists: A2(
-									elm$core$List$append,
-									model.checklists,
-									_List_fromArray(
-										[
-											A2(author$project$Main$Checklist, parameters.name, parameters.steps)
-										])),
-								mode: elm$core$Maybe$Nothing
-							});
-					} else {
-						return model;
-					}
-				}
-			default:
-				return _Utils_update(
-					model,
-					{mode: elm$core$Maybe$Nothing});
-		}
+var elm$core$List$map = F2(
+	function (f, xs) {
+		return A3(
+			elm$core$List$foldr,
+			F2(
+				function (x, acc) {
+					return A2(
+						elm$core$List$cons,
+						f(x),
+						acc);
+				}),
+			_List_Nil,
+			xs);
 	});
-var author$project$Main$CreateChecklist = {$: 'CreateChecklist'};
-var author$project$Main$Select = function (a) {
-	return {$: 'Select', a: a};
-};
-var elm$core$Basics$append = _Utils_append;
-var elm$core$Basics$identity = function (x) {
-	return x;
-};
 var elm$core$Basics$False = {$: 'False'};
 var elm$core$Basics$True = {$: 'True'};
 var elm$core$Result$isOk = function (result) {
@@ -4749,7 +4740,6 @@ var elm$core$Basics$apR = F2(
 	function (x, f) {
 		return f(x);
 	});
-var elm$core$Basics$eq = _Utils_equal;
 var elm$core$Tuple$first = function (_n0) {
 	var x = _n0.a;
 	return x;
@@ -4864,6 +4854,7 @@ var elm$json$Json$Decode$OneOf = function (a) {
 	return {$: 'OneOf', a: a};
 };
 var elm$core$Basics$and = _Basics_and;
+var elm$core$Basics$append = _Utils_append;
 var elm$core$Basics$or = _Basics_or;
 var elm$core$Char$toCode = _Char_toCode;
 var elm$core$Char$isLower = function (_char) {
@@ -5042,6 +5033,380 @@ var elm$json$Json$Decode$errorToStringHelp = F2(
 			}
 		}
 	});
+var elm$core$Platform$Cmd$batch = _Platform_batch;
+var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
+var elm$core$Basics$identity = function (x) {
+	return x;
+};
+var elm$core$Task$Perform = function (a) {
+	return {$: 'Perform', a: a};
+};
+var elm$core$Task$succeed = _Scheduler_succeed;
+var elm$core$Task$init = elm$core$Task$succeed(_Utils_Tuple0);
+var elm$core$Task$andThen = _Scheduler_andThen;
+var elm$core$Task$map = F2(
+	function (func, taskA) {
+		return A2(
+			elm$core$Task$andThen,
+			function (a) {
+				return elm$core$Task$succeed(
+					func(a));
+			},
+			taskA);
+	});
+var elm$core$Task$map2 = F3(
+	function (func, taskA, taskB) {
+		return A2(
+			elm$core$Task$andThen,
+			function (a) {
+				return A2(
+					elm$core$Task$andThen,
+					function (b) {
+						return elm$core$Task$succeed(
+							A2(func, a, b));
+					},
+					taskB);
+			},
+			taskA);
+	});
+var elm$core$Task$sequence = function (tasks) {
+	return A3(
+		elm$core$List$foldr,
+		elm$core$Task$map2(elm$core$List$cons),
+		elm$core$Task$succeed(_List_Nil),
+		tasks);
+};
+var elm$core$Platform$sendToApp = _Platform_sendToApp;
+var elm$core$Task$spawnCmd = F2(
+	function (router, _n0) {
+		var task = _n0.a;
+		return _Scheduler_spawn(
+			A2(
+				elm$core$Task$andThen,
+				elm$core$Platform$sendToApp(router),
+				task));
+	});
+var elm$core$Task$onEffects = F3(
+	function (router, commands, state) {
+		return A2(
+			elm$core$Task$map,
+			function (_n0) {
+				return _Utils_Tuple0;
+			},
+			elm$core$Task$sequence(
+				A2(
+					elm$core$List$map,
+					elm$core$Task$spawnCmd(router),
+					commands)));
+	});
+var elm$core$Task$onSelfMsg = F3(
+	function (_n0, _n1, _n2) {
+		return elm$core$Task$succeed(_Utils_Tuple0);
+	});
+var elm$core$Task$cmdMap = F2(
+	function (tagger, _n0) {
+		var task = _n0.a;
+		return elm$core$Task$Perform(
+			A2(elm$core$Task$map, tagger, task));
+	});
+_Platform_effectManagers['Task'] = _Platform_createManager(elm$core$Task$init, elm$core$Task$onEffects, elm$core$Task$onSelfMsg, elm$core$Task$cmdMap);
+var elm$core$Task$command = _Platform_leaf('Task');
+var elm$core$Task$perform = F2(
+	function (toMessage, task) {
+		return elm$core$Task$command(
+			elm$core$Task$Perform(
+				A2(elm$core$Task$map, toMessage, task)));
+	});
+var elm$time$Time$Name = function (a) {
+	return {$: 'Name', a: a};
+};
+var elm$time$Time$Offset = function (a) {
+	return {$: 'Offset', a: a};
+};
+var elm$time$Time$Zone = F2(
+	function (a, b) {
+		return {$: 'Zone', a: a, b: b};
+	});
+var elm$time$Time$customZone = elm$time$Time$Zone;
+var elm$time$Time$Posix = function (a) {
+	return {$: 'Posix', a: a};
+};
+var elm$time$Time$millisToPosix = elm$time$Time$Posix;
+var elm$time$Time$now = _Time_now(elm$time$Time$millisToPosix);
+var author$project$Main$update = F2(
+	function (msg, model) {
+		switch (msg.$) {
+			case 'MoveToNext':
+				return _Utils_Tuple2(
+					model,
+					A2(elm$core$Task$perform, author$project$Main$ActuallyMoveToNext, elm$time$Time$now));
+			case 'ActuallyMoveToNext':
+				var time = msg.a;
+				var _n1 = model.mode;
+				if (_n1.$ === 'Run') {
+					var checklist = _n1.a;
+					var stepsLength = elm$core$List$length(checklist.checklist.steps);
+					if (_Utils_cmp(checklist.currentStep, stepsLength) < 0) {
+						var nextStep = checklist.currentStep + 1;
+						var updatedChecklistRun = _Utils_update(
+							checklist,
+							{currentStep: nextStep});
+						var completed = _Utils_eq(nextStep, stepsLength);
+						if (completed) {
+							var updatedChecklists = function (c) {
+								return _Utils_eq(c.uid, checklist.checklist.uid) ? _Utils_update(
+									c,
+									{
+										lastCompleted: elm$core$Maybe$Just(time)
+									}) : c;
+							};
+							return _Utils_Tuple2(
+								_Utils_update(
+									model,
+									{
+										checklists: A2(elm$core$List$map, updatedChecklists, model.checklists),
+										inProgressList: A2(
+											elm$core$List$filter,
+											function (run) {
+												return !_Utils_eq(run.checklist.uid, updatedChecklistRun.checklist.uid);
+											},
+											model.inProgressList),
+										mode: author$project$Main$Run(updatedChecklistRun)
+									}),
+								elm$core$Platform$Cmd$none);
+						} else {
+							var updatedInProgress = function (run) {
+								return _Utils_eq(run.checklist.uid, updatedChecklistRun.checklist.uid) ? updatedChecklistRun : run;
+							};
+							return _Utils_Tuple2(
+								_Utils_update(
+									model,
+									{
+										inProgressList: A2(elm$core$List$map, updatedInProgress, model.inProgressList),
+										mode: author$project$Main$Run(updatedChecklistRun)
+									}),
+								elm$core$Platform$Cmd$none);
+						}
+					} else {
+						return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+					}
+				} else {
+					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+				}
+			case 'Select':
+				var selectedChecklist = msg.a;
+				var _n2 = elm$core$List$head(
+					A2(
+						elm$core$List$filter,
+						function (run) {
+							return _Utils_eq(run.checklist.uid, selectedChecklist.uid);
+						},
+						model.inProgressList));
+				if (_n2.$ === 'Nothing') {
+					var newRun = A2(author$project$Main$ChecklistRun, selectedChecklist, 0);
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								inProgressList: A2(
+									elm$core$List$append,
+									model.inProgressList,
+									_List_fromArray(
+										[newRun])),
+								mode: author$project$Main$Run(newRun)
+							}),
+						elm$core$Platform$Cmd$none);
+				} else {
+					var inProgressRun = _n2.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								mode: author$project$Main$Run(inProgressRun)
+							}),
+						elm$core$Platform$Cmd$none);
+				}
+			case 'Discard':
+				var checklist = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							inProgressList: A2(
+								elm$core$List$filter,
+								function (run) {
+									return !_Utils_eq(run.checklist.uid, checklist.uid);
+								},
+								model.inProgressList),
+							mode: author$project$Main$Browse
+						}),
+					elm$core$Platform$Cmd$none);
+			case 'BackHome':
+				var _n3 = model.mode;
+				if (_n3.$ === 'Run') {
+					var checklistRun = _n3.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{mode: author$project$Main$Browse}),
+						elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{mode: author$project$Main$Browse}),
+						elm$core$Platform$Cmd$none);
+				}
+			case 'CreateChecklist':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							mode: author$project$Main$Create(
+								A4(
+									author$project$Main$NewChecklistParameters,
+									'',
+									elm$core$Maybe$Just(''),
+									_List_Nil,
+									elm$core$Maybe$Nothing))
+						}),
+					elm$core$Platform$Cmd$none);
+			case 'UpdateChecklist':
+				var createMsg = msg.a;
+				var _n4 = model.mode;
+				if (_n4.$ === 'Create') {
+					var parameters = _n4.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								mode: author$project$Main$Create(
+									A2(author$project$Main$updateCreate, createMsg, parameters))
+							}),
+						elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+				}
+			case 'SaveChecklist':
+				var _n5 = model.mode;
+				if (_n5.$ === 'Create') {
+					var parameters = _n5.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								checklists: A2(
+									elm$core$List$append,
+									model.checklists,
+									_List_fromArray(
+										[
+											A4(
+											author$project$Main$Checklist,
+											parameters.name,
+											elm$core$List$length(model.checklists) + 1,
+											parameters.steps,
+											elm$core$Maybe$Nothing)
+										])),
+								mode: author$project$Main$Browse
+							}),
+						elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+				}
+			default:
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{mode: author$project$Main$Browse}),
+					elm$core$Platform$Cmd$none);
+		}
+	});
+var author$project$Main$CreateChecklist = {$: 'CreateChecklist'};
+var author$project$Main$Select = function (a) {
+	return {$: 'Select', a: a};
+};
+var elm$core$Basics$modBy = _Basics_modBy;
+var elm$time$Time$flooredDiv = F2(
+	function (numerator, denominator) {
+		return elm$core$Basics$floor(numerator / denominator);
+	});
+var elm$time$Time$posixToMillis = function (_n0) {
+	var millis = _n0.a;
+	return millis;
+};
+var elm$time$Time$toAdjustedMinutesHelp = F3(
+	function (defaultOffset, posixMinutes, eras) {
+		toAdjustedMinutesHelp:
+		while (true) {
+			if (!eras.b) {
+				return posixMinutes + defaultOffset;
+			} else {
+				var era = eras.a;
+				var olderEras = eras.b;
+				if (_Utils_cmp(era.start, posixMinutes) < 0) {
+					return posixMinutes + era.offset;
+				} else {
+					var $temp$defaultOffset = defaultOffset,
+						$temp$posixMinutes = posixMinutes,
+						$temp$eras = olderEras;
+					defaultOffset = $temp$defaultOffset;
+					posixMinutes = $temp$posixMinutes;
+					eras = $temp$eras;
+					continue toAdjustedMinutesHelp;
+				}
+			}
+		}
+	});
+var elm$time$Time$toAdjustedMinutes = F2(
+	function (_n0, time) {
+		var defaultOffset = _n0.a;
+		var eras = _n0.b;
+		return A3(
+			elm$time$Time$toAdjustedMinutesHelp,
+			defaultOffset,
+			A2(
+				elm$time$Time$flooredDiv,
+				elm$time$Time$posixToMillis(time),
+				60000),
+			eras);
+	});
+var elm$time$Time$toHour = F2(
+	function (zone, time) {
+		return A2(
+			elm$core$Basics$modBy,
+			24,
+			A2(
+				elm$time$Time$flooredDiv,
+				A2(elm$time$Time$toAdjustedMinutes, zone, time),
+				60));
+	});
+var elm$time$Time$toMinute = F2(
+	function (zone, time) {
+		return A2(
+			elm$core$Basics$modBy,
+			60,
+			A2(elm$time$Time$toAdjustedMinutes, zone, time));
+	});
+var elm$time$Time$toSecond = F2(
+	function (_n0, time) {
+		return A2(
+			elm$core$Basics$modBy,
+			60,
+			A2(
+				elm$time$Time$flooredDiv,
+				elm$time$Time$posixToMillis(time),
+				1000));
+	});
+var elm$time$Time$utc = A2(elm$time$Time$Zone, 0, _List_Nil);
+var author$project$Main$toHHMMSSString = function (time) {
+	var second = elm$core$String$fromInt(
+		A2(elm$time$Time$toSecond, elm$time$Time$utc, time));
+	var minute = elm$core$String$fromInt(
+		A2(elm$time$Time$toMinute, elm$time$Time$utc, time));
+	var hour = elm$core$String$fromInt(
+		A2(elm$time$Time$toHour, elm$time$Time$utc, time));
+	return hour + (':' + (minute + (':' + (second + ' UTC'))));
+};
 var elm$json$Json$Decode$map = _Json_map1;
 var elm$json$Json$Decode$map2 = _Json_map2;
 var elm$json$Json$Decode$succeed = _Json_succeed;
@@ -5059,6 +5424,7 @@ var elm$virtual_dom$VirtualDom$toHandlerInt = function (handler) {
 };
 var elm$html$Html$a = _VirtualDom_node('a');
 var elm$html$Html$li = _VirtualDom_node('li');
+var elm$html$Html$span = _VirtualDom_node('span');
 var elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var elm$html$Html$text = elm$virtual_dom$VirtualDom$text;
 var elm$json$Json$Encode$string = _Json_wrap;
@@ -5069,6 +5435,7 @@ var elm$html$Html$Attributes$stringProperty = F2(
 			key,
 			elm$json$Json$Encode$string(string));
 	});
+var elm$html$Html$Attributes$class = elm$html$Html$Attributes$stringProperty('className');
 var elm$html$Html$Attributes$href = function (url) {
 	return A2(
 		elm$html$Html$Attributes$stringProperty,
@@ -5092,55 +5459,115 @@ var elm$html$Html$Events$onClick = function (msg) {
 		'click',
 		elm$json$Json$Decode$succeed(msg));
 };
-var author$project$Main$viewChecklistEntry = function (checklist) {
-	return A2(
-		elm$html$Html$li,
-		_List_Nil,
-		_List_fromArray(
-			[
-				A2(
-				elm$html$Html$a,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$href('#'),
-						elm$html$Html$Events$onClick(
-						author$project$Main$Select(checklist))
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text('👉 ' + checklist.name)
-					]))
-			]));
-};
-var elm$core$List$map = F2(
-	function (f, xs) {
-		return A3(
-			elm$core$List$foldr,
-			F2(
-				function (x, acc) {
-					return A2(
-						elm$core$List$cons,
-						f(x),
-						acc);
-				}),
-			_List_Nil,
+var author$project$Main$viewChecklistEntry = F2(
+	function (checklist, inProgress) {
+		var timeString = function () {
+			if (inProgress) {
+				return 'in progress';
+			} else {
+				var _n0 = checklist.lastCompleted;
+				if (_n0.$ === 'Just') {
+					var completed = _n0.a;
+					return 'last completed at ' + author$project$Main$toHHMMSSString(completed);
+				} else {
+					return 'never run';
+				}
+			}
+		}();
+		return A2(
+			elm$html$Html$li,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('border rounded pl-2 p-3 mb-2')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$a,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$href('#'),
+							elm$html$Html$Events$onClick(
+							author$project$Main$Select(checklist))
+						]),
+					_List_fromArray(
+						[
+							A2(
+							elm$html$Html$span,
+							_List_Nil,
+							_List_fromArray(
+								[
+									elm$html$Html$text(checklist.name)
+								])),
+							A2(
+							elm$html$Html$span,
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$class('text-gray-500 italic')
+								]),
+							_List_fromArray(
+								[
+									elm$html$Html$text(' ' + timeString)
+								]))
+						]))
+				]));
+	});
+var elm$core$List$any = F2(
+	function (isOkay, list) {
+		any:
+		while (true) {
+			if (!list.b) {
+				return false;
+			} else {
+				var x = list.a;
+				var xs = list.b;
+				if (isOkay(x)) {
+					return true;
+				} else {
+					var $temp$isOkay = isOkay,
+						$temp$list = xs;
+					isOkay = $temp$isOkay;
+					list = $temp$list;
+					continue any;
+				}
+			}
+		}
+	});
+var elm$core$List$member = F2(
+	function (x, xs) {
+		return A2(
+			elm$core$List$any,
+			function (a) {
+				return _Utils_eq(a, x);
+			},
 			xs);
 	});
 var elm$html$Html$div = _VirtualDom_node('div');
 var elm$html$Html$ul = _VirtualDom_node('ul');
-var author$project$Main$viewChecklistList = function (checklists) {
-	return A2(
-		elm$html$Html$div,
-		_List_Nil,
-		_List_fromArray(
-			[
+var author$project$Main$viewChecklistList = F2(
+	function (checklists, inProgressList) {
+		var viewChecklistEntry_ = function (checklist) {
+			return A2(
+				elm$core$List$member,
+				checklist.uid,
 				A2(
-				elm$html$Html$ul,
-				_List_Nil,
-				A2(elm$core$List$map, author$project$Main$viewChecklistEntry, checklists))
-			]));
-};
-var author$project$Main$DiscardChecklist = {$: 'DiscardChecklist'};
+					elm$core$List$map,
+					function (run) {
+						return run.checklist.uid;
+					},
+					inProgressList)) ? A2(author$project$Main$viewChecklistEntry, checklist, true) : A2(author$project$Main$viewChecklistEntry, checklist, false);
+		};
+		return A2(
+			elm$html$Html$div,
+			_List_Nil,
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$ul,
+					_List_Nil,
+					A2(elm$core$List$map, viewChecklistEntry_, checklists))
+				]));
+	});
 var author$project$Main$SaveChecklist = {$: 'SaveChecklist'};
 var author$project$Main$SaveStep = {$: 'SaveStep'};
 var author$project$Main$UpdateChecklist = function (a) {
@@ -5167,6 +5594,19 @@ var author$project$Main$SaveTitle = {$: 'SaveTitle'};
 var author$project$Main$UpdateTitle = function (a) {
 	return {$: 'UpdateTitle', a: a};
 };
+var author$project$Main$DiscardChecklist = {$: 'DiscardChecklist'};
+var elm$html$Html$button = _VirtualDom_node('button');
+var author$project$Main$viewDiscardChecklist = A2(
+	elm$html$Html$button,
+	_List_fromArray(
+		[
+			elm$html$Html$Attributes$class('py-2 px-4 border rounded'),
+			elm$html$Html$Events$onClick(author$project$Main$DiscardChecklist)
+		]),
+	_List_fromArray(
+		[
+			elm$html$Html$text('Cancel')
+		]));
 var elm$html$Html$input = _VirtualDom_node('input');
 var elm$html$Html$label = _VirtualDom_node('label');
 var elm$json$Json$Encode$bool = _Json_wrap;
@@ -5178,7 +5618,6 @@ var elm$html$Html$Attributes$boolProperty = F2(
 			elm$json$Json$Encode$bool(bool));
 	});
 var elm$html$Html$Attributes$autofocus = elm$html$Html$Attributes$boolProperty('autofocus');
-var elm$html$Html$Attributes$class = elm$html$Html$Attributes$stringProperty('className');
 var elm$html$Html$Attributes$placeholder = elm$html$Html$Attributes$stringProperty('placeholder');
 var elm$html$Html$Attributes$type_ = elm$html$Html$Attributes$stringProperty('type');
 var elm$html$Html$Attributes$value = elm$html$Html$Attributes$stringProperty('value');
@@ -5244,7 +5683,15 @@ var author$project$Main$viewChecklistParametersEmpty = function (titleValue) {
 						author$project$Main$onEnter(
 						author$project$Main$UpdateChecklist(author$project$Main$SaveTitle))
 					]),
-				_List_Nil)
+				_List_Nil),
+				A2(
+				elm$html$Html$div,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('text-right mt-2')
+					]),
+				_List_fromArray(
+					[author$project$Main$viewDiscardChecklist]))
 			]));
 };
 var elm$core$List$isEmpty = function (xs) {
@@ -5254,7 +5701,6 @@ var elm$core$List$isEmpty = function (xs) {
 		return false;
 	}
 };
-var elm$html$Html$button = _VirtualDom_node('button');
 var author$project$Main$viewChecklistParameters = function (parameters) {
 	var _n0 = parameters.editingName;
 	if (_n0.$ === 'Just') {
@@ -5349,22 +5795,12 @@ var author$project$Main$viewChecklistParameters = function (parameters) {
 						]),
 					_List_fromArray(
 						[
+							author$project$Main$viewDiscardChecklist,
 							A2(
 							elm$html$Html$button,
 							_List_fromArray(
 								[
-									elm$html$Html$Attributes$class('py-2 px-4 border rounded mr-1'),
-									elm$html$Html$Events$onClick(author$project$Main$DiscardChecklist)
-								]),
-							_List_fromArray(
-								[
-									elm$html$Html$text('Cancel')
-								])),
-							A2(
-							elm$html$Html$button,
-							_List_fromArray(
-								[
-									elm$html$Html$Attributes$class('bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded'),
+									elm$html$Html$Attributes$class('bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 ml-1 rounded'),
 									elm$html$Html$Events$onClick(author$project$Main$SaveChecklist)
 								]),
 							_List_fromArray(
@@ -5374,6 +5810,10 @@ var author$project$Main$viewChecklistParameters = function (parameters) {
 						]))
 				]));
 	}
+};
+var author$project$Main$BackHome = {$: 'BackHome'};
+var author$project$Main$Discard = function (a) {
+	return {$: 'Discard', a: a};
 };
 var elm$core$Basics$ge = _Utils_ge;
 var author$project$Main$isCompleted = function (checklistRun) {
@@ -5400,10 +5840,25 @@ var elm$html$Html$Attributes$checked = elm$html$Html$Attributes$boolProperty('ch
 var elm$html$Html$Attributes$disabled = elm$html$Html$Attributes$boolProperty('disabled');
 var elm$html$Html$Attributes$for = elm$html$Html$Attributes$stringProperty('htmlFor');
 var elm$html$Html$Attributes$id = elm$html$Html$Attributes$stringProperty('id');
+var elm$json$Json$Decode$bool = _Json_decodeBool;
+var elm$html$Html$Events$targetChecked = A2(
+	elm$json$Json$Decode$at,
+	_List_fromArray(
+		['target', 'checked']),
+	elm$json$Json$Decode$bool);
+var elm$html$Html$Events$onCheck = function (tagger) {
+	return A2(
+		elm$html$Html$Events$on,
+		'change',
+		A2(elm$json$Json$Decode$map, tagger, elm$html$Html$Events$targetChecked));
+};
 var author$project$Main$viewStep = function (viewData) {
 	return A2(
 		elm$html$Html$div,
-		_List_Nil,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('border rounded pl-2 p-3 mb-2')
+			]),
 		_List_fromArray(
 			[
 				A2(
@@ -5411,10 +5866,13 @@ var author$project$Main$viewStep = function (viewData) {
 				_List_fromArray(
 					[
 						elm$html$Html$Attributes$type_('checkbox'),
-						elm$html$Html$Attributes$class('mr-2'),
 						elm$html$Html$Attributes$checked(viewData.completed),
 						elm$html$Html$Attributes$disabled(!viewData.active),
-						elm$html$Html$Attributes$id(viewData.text)
+						elm$html$Html$Attributes$id(viewData.text),
+						elm$html$Html$Events$onCheck(
+						function (_n0) {
+							return author$project$Main$MoveToNext;
+						})
 					]),
 				_List_Nil),
 				A2(
@@ -5422,7 +5880,8 @@ var author$project$Main$viewStep = function (viewData) {
 				_List_fromArray(
 					[
 						elm$html$Html$Attributes$for(viewData.text),
-						elm$html$Html$Events$onClick(author$project$Main$MoveToNext)
+						elm$html$Html$Attributes$class(
+						viewData.completed ? 'line-through ml-2 text-gray-500 w-full' : 'ml-2 w-full')
 					]),
 				_List_fromArray(
 					[
@@ -5443,130 +5902,129 @@ var author$project$Main$viewChecklistRun = function (checklistRun) {
 				A2(elm$core$List$map, author$project$Main$viewStep, stepsViewData)),
 				A2(
 				elm$html$Html$div,
+				_List_Nil,
+				author$project$Main$isCompleted(checklistRun) ? _List_fromArray(
+					[
+						A2(
+						elm$html$Html$div,
+						_List_fromArray(
+							[
+								elm$html$Html$Attributes$class('my-3')
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text('All done')
+							]))
+					]) : _List_Nil),
+				A2(
+				elm$html$Html$div,
 				_List_fromArray(
 					[
-						elm$html$Html$Attributes$class('pt-2')
+						elm$html$Html$Attributes$class('mt-4 clearfix')
 					]),
 				author$project$Main$isCompleted(checklistRun) ? _List_fromArray(
 					[
-						elm$html$Html$text('all done ✅')
-					]) : _List_Nil)
+						A2(
+						elm$html$Html$button,
+						_List_fromArray(
+							[
+								elm$html$Html$Attributes$class('float-right py-2 px-4 border rounded'),
+								elm$html$Html$Events$onClick(author$project$Main$BackHome)
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text('Back')
+							]))
+					]) : _List_fromArray(
+					[
+						A2(
+						elm$html$Html$button,
+						_List_fromArray(
+							[
+								elm$html$Html$Attributes$class('float-right py-2 px-4 border rounded ml-1'),
+								elm$html$Html$Events$onClick(author$project$Main$BackHome)
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text('Back')
+							])),
+						A2(
+						elm$html$Html$button,
+						_List_fromArray(
+							[
+								elm$html$Html$Attributes$class('float-right py-2 px-4 border rounded'),
+								elm$html$Html$Events$onClick(
+								author$project$Main$Discard(checklistRun.checklist))
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text('Discard')
+							]))
+					]))
 			]));
 };
-var author$project$Main$viewModel = function (model) {
-	var _n0 = model.mode;
-	if (_n0.$ === 'Nothing') {
-		return A2(
-			elm$html$Html$div,
-			_List_Nil,
-			_List_fromArray(
-				[
-					A2(
-					elm$html$Html$button,
-					_List_fromArray(
-						[
-							elm$html$Html$Events$onClick(author$project$Main$CreateChecklist)
-						]),
-					_List_fromArray(
-						[
-							elm$html$Html$text('❇️ Add Checklist')
-						])),
-					author$project$Main$viewChecklistList(model.checklists)
-				]));
-	} else {
-		var mode = _n0.a;
-		if (mode.$ === 'Run') {
-			var checklistRun = mode.a;
-			return author$project$Main$viewChecklistRun(checklistRun);
-		} else {
-			var parameters = mode.a;
-			return author$project$Main$viewChecklistParameters(parameters);
-		}
-	}
-};
-var elm$html$Html$h1 = _VirtualDom_node('h1');
-var elm$html$Html$h3 = _VirtualDom_node('h3');
-var elm$html$Html$p = _VirtualDom_node('p');
 var author$project$Main$view = function (model) {
 	return A2(
 		elm$html$Html$div,
 		_List_fromArray(
 			[
-				elm$html$Html$Attributes$class('container mx-auto py-8 px-6')
+				elm$html$Html$Attributes$class('mt-4')
 			]),
-		_List_fromArray(
-			[
-				A2(
-				elm$html$Html$h1,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('text-3xl pb-2')
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text('Checklists Demo')
-					])),
-				A2(
-				elm$html$Html$p,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('italic')
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text('Nothing of what you see is persisted ;)')
-					])),
-				A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('mt-4')
-					]),
-				_List_fromArray(
-					[
-						author$project$Main$viewModel(model)
-					])),
-				A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('pt-4 pb-2')
-					]),
-				_List_fromArray(
-					[
-						A2(
-						elm$html$Html$h3,
-						_List_fromArray(
-							[
-								elm$html$Html$Attributes$class('text-xl')
-							]),
-						_List_fromArray(
-							[
-								elm$html$Html$text('Next steps:')
-							]))
-					])),
-				A2(
-				elm$html$Html$ul,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('list-disc list-inside')
-					]),
-				_List_fromArray(
-					[
-						A2(
-						elm$html$Html$li,
-						_List_Nil,
-						_List_fromArray(
-							[
-								elm$html$Html$text('re-run checklist and track run timestamps')
-							]))
-					]))
-			]));
+		function () {
+			var _n0 = model.mode;
+			switch (_n0.$) {
+				case 'Run':
+					var checklistRun = _n0.a;
+					return _List_fromArray(
+						[
+							author$project$Main$viewChecklistRun(checklistRun)
+						]);
+				case 'Create':
+					var parameters = _n0.a;
+					return _List_fromArray(
+						[
+							author$project$Main$viewChecklistParameters(parameters)
+						]);
+				default:
+					return _List_fromArray(
+						[
+							A2(
+							elm$html$Html$div,
+							_List_Nil,
+							_List_fromArray(
+								[
+									A2(
+									elm$html$Html$div,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$class('float clearfix mb-2')
+										]),
+									_List_fromArray(
+										[
+											A2(
+											elm$html$Html$button,
+											_List_fromArray(
+												[
+													elm$html$Html$Attributes$class('float float-right py-2 px-4 border rounded'),
+													elm$html$Html$Events$onClick(author$project$Main$CreateChecklist)
+												]),
+											_List_fromArray(
+												[
+													elm$html$Html$text('Add Checklist')
+												]))
+										]))
+								])),
+							A2(
+							elm$html$Html$div,
+							_List_Nil,
+							_List_fromArray(
+								[
+									A2(author$project$Main$viewChecklistList, model.checklists, model.inProgressList)
+								]))
+						]);
+			}
+		}());
 };
-var elm$core$Platform$Cmd$batch = _Platform_batch;
-var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
-var elm$core$Platform$Sub$batch = _Platform_batch;
-var elm$core$Platform$Sub$none = elm$core$Platform$Sub$batch(_List_Nil);
 var elm$browser$Browser$External = function (a) {
 	return {$: 'External', a: a};
 };
@@ -5585,85 +6043,6 @@ var elm$core$Basics$never = function (_n0) {
 		continue never;
 	}
 };
-var elm$core$Task$Perform = function (a) {
-	return {$: 'Perform', a: a};
-};
-var elm$core$Task$succeed = _Scheduler_succeed;
-var elm$core$Task$init = elm$core$Task$succeed(_Utils_Tuple0);
-var elm$core$Task$andThen = _Scheduler_andThen;
-var elm$core$Task$map = F2(
-	function (func, taskA) {
-		return A2(
-			elm$core$Task$andThen,
-			function (a) {
-				return elm$core$Task$succeed(
-					func(a));
-			},
-			taskA);
-	});
-var elm$core$Task$map2 = F3(
-	function (func, taskA, taskB) {
-		return A2(
-			elm$core$Task$andThen,
-			function (a) {
-				return A2(
-					elm$core$Task$andThen,
-					function (b) {
-						return elm$core$Task$succeed(
-							A2(func, a, b));
-					},
-					taskB);
-			},
-			taskA);
-	});
-var elm$core$Task$sequence = function (tasks) {
-	return A3(
-		elm$core$List$foldr,
-		elm$core$Task$map2(elm$core$List$cons),
-		elm$core$Task$succeed(_List_Nil),
-		tasks);
-};
-var elm$core$Platform$sendToApp = _Platform_sendToApp;
-var elm$core$Task$spawnCmd = F2(
-	function (router, _n0) {
-		var task = _n0.a;
-		return _Scheduler_spawn(
-			A2(
-				elm$core$Task$andThen,
-				elm$core$Platform$sendToApp(router),
-				task));
-	});
-var elm$core$Task$onEffects = F3(
-	function (router, commands, state) {
-		return A2(
-			elm$core$Task$map,
-			function (_n0) {
-				return _Utils_Tuple0;
-			},
-			elm$core$Task$sequence(
-				A2(
-					elm$core$List$map,
-					elm$core$Task$spawnCmd(router),
-					commands)));
-	});
-var elm$core$Task$onSelfMsg = F3(
-	function (_n0, _n1, _n2) {
-		return elm$core$Task$succeed(_Utils_Tuple0);
-	});
-var elm$core$Task$cmdMap = F2(
-	function (tagger, _n0) {
-		var task = _n0.a;
-		return elm$core$Task$Perform(
-			A2(elm$core$Task$map, tagger, task));
-	});
-_Platform_effectManagers['Task'] = _Platform_createManager(elm$core$Task$init, elm$core$Task$onEffects, elm$core$Task$onSelfMsg, elm$core$Task$cmdMap);
-var elm$core$Task$command = _Platform_leaf('Task');
-var elm$core$Task$perform = F2(
-	function (toMessage, task) {
-		return elm$core$Task$command(
-			elm$core$Task$Perform(
-				A2(elm$core$Task$map, toMessage, task)));
-	});
 var elm$core$String$length = _String_length;
 var elm$core$String$slice = _String_slice;
 var elm$core$String$dropLeft = F2(
@@ -5793,25 +6172,19 @@ var elm$url$Url$fromString = function (str) {
 		elm$url$Url$Https,
 		A2(elm$core$String$dropLeft, 8, str)) : elm$core$Maybe$Nothing);
 };
-var elm$browser$Browser$sandbox = function (impl) {
-	return _Browser_element(
-		{
-			init: function (_n0) {
-				return _Utils_Tuple2(impl.init, elm$core$Platform$Cmd$none);
-			},
-			subscriptions: function (_n1) {
-				return elm$core$Platform$Sub$none;
-			},
-			update: F2(
-				function (msg, model) {
-					return _Utils_Tuple2(
-						A2(impl.update, msg, model),
-						elm$core$Platform$Cmd$none);
-				}),
-			view: impl.view
-		});
-};
-var author$project$Main$main = elm$browser$Browser$sandbox(
-	{init: author$project$Main$init, update: author$project$Main$update, view: author$project$Main$view});
+var elm$browser$Browser$element = _Browser_element;
+var elm$core$Platform$Sub$batch = _Platform_batch;
+var elm$core$Platform$Sub$none = elm$core$Platform$Sub$batch(_List_Nil);
+var author$project$Main$main = elm$browser$Browser$element(
+	{
+		init: function (_n0) {
+			return _Utils_Tuple2(author$project$Main$init, elm$core$Platform$Cmd$none);
+		},
+		subscriptions: function (_n1) {
+			return elm$core$Platform$Sub$none;
+		},
+		update: author$project$Main$update,
+		view: author$project$Main$view
+	});
 _Platform_export({'Main':{'init':author$project$Main$main(
 	elm$json$Json$Decode$succeed(_Utils_Tuple0))(0)}});}(this));
