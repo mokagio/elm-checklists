@@ -54,7 +54,7 @@ swimming =
 
 init : Model
 init =
-    { mode = Run <| ChecklistRun swimming 1
+    { mode = Browse
     , checklists =
         [ swimming
         , Checklist
