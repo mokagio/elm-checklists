@@ -52,11 +52,24 @@ swimming =
         Nothing
 
 
+releaseHelper : Checklist
+releaseHelper =
+    Checklist
+        "iOS Release Candidate [3.29.0]"
+        2
+        [ Step "Remind developers release will be cut tomorrow"
+        , Step "Remind developers release will be cut today"
+        , Step "Cut release"
+        ]
+        Nothing
+
+
 init : Model
 init =
-    { mode = Browse
+    { mode = Run <| ChecklistRun releaseHelper 1
     , checklists =
         [ swimming
+        , releaseHelper
         , Checklist
             "Morning Routine"
             1
